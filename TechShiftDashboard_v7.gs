@@ -314,7 +314,7 @@ body::before {
     <div class="stat-chip"><span class="n" style="color:#4ade80;">${totalWorking}</span><span class="l" style="color:#4ade80;">Làm</span></div>
     ${statChipsHtml}
     <div class="stat-chip"><span class="n" style="color:#fbbf24;">${totalAll}</span><span class="l" style="color:#fbbf24;">Tổng</span></div>
-    <button id="dlBtn" onclick="dlPng()">⬇ PNG</button>
+    <button id="dlBtn" onclick="copyImg()">📋 Copy</button>
     <span id="status"></span>
   </div>
 </div>
@@ -334,7 +334,7 @@ body::before {
 </div>
 
 <script>
-function dlPng() {
+function copyImg() {
   const btn = document.getElementById('dlBtn');
   const st  = document.getElementById('status');
   btn.disabled = true; btn.textContent = '⏳ Đang tạo...';
@@ -347,14 +347,22 @@ function dlPng() {
     windowWidth: document.body.scrollWidth,
     windowHeight: document.body.scrollHeight
   }).then(canvas => {
-    const d=new Date(), dd=String(d.getDate()).padStart(2,'0'), mm=String(d.getMonth()+1).padStart(2,'0');
-    const a=document.createElement('a');
-    a.href=canvas.toDataURL('image/png');
-    a.download='tech-shift-'+dd+mm+d.getFullYear()+'.png';
-    a.click();
-    btn.disabled=false; btn.textContent='⬇ Tải PNG';
-    st.textContent='✅ Đã tải!';
-    setTimeout(()=>st.textContent='',3000);
+    canvas.toBlob(blob => {
+      navigator.clipboard.write([new ClipboardItem({'image/png': blob})])
+        .then(() => {
+          btn.disabled = false; btn.textContent = '📋 Copy';
+          st.textContent = '✅ Đã copy! Paste vào Telegram.';
+          setTimeout(() => st.textContent = '', 4000);
+        })
+        .catch(() => {
+          const a = document.createElement('a');
+          a.href = canvas.toDataURL('image/png');
+          a.download = 'tech-shift.png'; a.click();
+          btn.disabled = false; btn.textContent = '📋 Copy';
+          st.textContent = '⚠️ Clipboard bị chặn, đã tải xuống.';
+          setTimeout(() => st.textContent = '', 4000);
+        });
+    }, 'image/png');
   });
 }
 <\/script>

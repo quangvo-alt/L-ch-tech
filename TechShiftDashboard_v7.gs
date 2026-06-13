@@ -91,6 +91,15 @@ function buildHtml(grouped, shiftOrder, dateStr, dayName, shiftTimesRaw, tzLabel
 
   function cleanName(raw) { return raw.replace(/\s*\([^)]*\)/g,"").trim(); }
   function cleanRole(raw) { return (raw || "").trim().replace(/[,;.]+$/, "").trim(); }
+  function roleStyle(role) {
+    const r = role.toLowerCase();
+    if (r.includes("mgr"))                          return "background:#fef3c7;color:#92400e;border:1px solid #fcd34d;";   // Amber — Manager
+    if (r.includes("sup") && !r.includes("build"))  return "background:#dbeafe;color:#1d4ed8;border:1px solid #93c5fd;";   // Blue — Tech Support
+    if (r.includes("build"))                         return "background:#ffedd5;color:#c2410c;border:1px solid #fdba74;";   // Orange — Tech Build
+    if (r.includes("lobby"))                         return "background:#ede9fe;color:#5b21b6;border:1px solid #c4b5fd;";   // Purple — Tech Lobby
+    if (r.includes("ba"))                            return "background:#d1fae5;color:#065f46;border:1px solid #6ee7b7;";   // Green — BA
+    return "background:#f1f5f9;color:#475569;border:1px solid #cbd5e1;";  // Gray — default
+  }
   function initials(raw) {
     return cleanName(raw).split(/\s+/).slice(-2).map(w=>w[0].toUpperCase()).join("");
   }
@@ -109,7 +118,7 @@ function buildHtml(grouped, shiftOrder, dateStr, dayName, shiftTimesRaw, tzLabel
     const ini      = initials(p.name);
     const name     = cleanName(p.name);
     const role     = cleanRole(p.dept);   // column H = Function/Role
-    const roleHtml = role ? `<span class="p-role">${role}</span>` : "";
+    const roleHtml = role ? `<span class="p-role" style="${roleStyle(role)}">${role}</span>` : "";
     return `<div class="p-row">
       <div class="p-av" style="background:${m.avBg};color:${m.avTxt};">${ini}</div>
       <span class="p-nm">${name}</span>${roleHtml}
@@ -239,7 +248,7 @@ body::before {
 .p-row:last-child { border-bottom:none; }
 .p-av  { width:22px; height:22px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:8px; font-weight:900; flex-shrink:0; }
 .p-nm   { font-size:11px; font-weight:700; color:#0f172a; }
-.p-role { font-size:9px; color:#64748b; font-weight:600; margin-left:4px; font-style:italic; }
+.p-role { font-size:9px; font-weight:700; margin-left:4px; padding:1px 6px; border-radius:4px; white-space:nowrap; }
 .p-dp  { font-size:9px;  color:#94a3b8; font-weight:500; margin-left:3px; }
 
 /* other section compact */

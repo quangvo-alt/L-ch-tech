@@ -16,10 +16,30 @@ function doGet() {
   const dateStr  = Utilities.formatDate(today, tz, "MMMM dd, yyyy");
   const dayName  = Utilities.formatDate(today, tz, "EEEE");
 
-  // Detect CST vs CDT dynamically (VN shifts are fixed UTC+7)
-  const tzOffset  = Utilities.formatDate(new Date(), tz, "Z"); // "-0600" or "-0500"
-  const isDST     = tzOffset === "-0500";
-  const tzLabel   = isDST ? "CDT (UTC−5)" : "CST (UTC−6)";
+  // Convert VN fixed times (UTC+7) to any local timezone dynamically
+  const tzOffsetStr = Utilities.formatDate(new Date(), tz, "Z"); // e.g. "-0600", "-0500", "-0400"
+  const sign        = tzOffsetStr[0] === "-" ? -1 : 1;
+  const hh          = parseInt(tzOffsetStr.slice(1,3), 10);
+  const mm          = parseInt(tzOffsetStr.slice(3,5), 10);
+  const localOffset = sign * (hh + mm / 60); // e.g. -6, -5, -4
+  const tzLabel     = "UTC" + (localOffset >= 0 ? "+" : "") + localOffset;
+
+  function vnToLocal(vnHour) {
+    // VN = UTC+7, so UTC = VN - 7; local = UTC + localOffset
+    return ((vnHour - 7 + localOffset) % 24 + 24) % 24;
+  }
+  function fmtHour(h) {
+    const period = h < 12 ? "AM" : "PM";
+    const h12    = h % 12 === 0 ? 12 : h % 12;
+    return h12 + ":00 " + period;
+  }
+
+  // VN fixed: Shift1 20→28(=4), Shift2 4→16(noon), Shift3 22→29(=5)
+  const shiftTimesRaw = {
+    C1: { s: vnToLocal(20),   e: vnToLocal(28 % 24) },
+    C2: { s: vnToLocal(4),    e: vnToLocal(16) },
+    C3: { s: vnToLocal(22),   e: vnToLocal(29 % 24) },
+  };
 
   const lastRow = sheet.getLastRow();
   if (lastRow < 3) return HtmlService.createHtmlOutput("<p>Không có dữ liệu</p>");
@@ -38,18 +58,22 @@ function doGet() {
   });
 
   return HtmlService
-    .createHtmlOutput(buildHtml(grouped, shiftOrder, dateStr, dayName, isDST, tzLabel))
+    .createHtmlOutput(buildHtml(grouped, shiftOrder, dateStr, dayName, shiftTimesRaw, tzLabel))
     .setTitle("Tech Shift " + dateStr)
     .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
 }
 
-function buildHtml(grouped, shiftOrder, dateStr, dayName, isDST, tzLabel) {
+function buildHtml(grouped, shiftOrder, dateStr, dayName, shiftTimesRaw, tzLabel) {
 
-  // VN fixed times (UTC+7) → CST (UTC−6) = −13h | CDT (UTC−5) = −12h
+  function fmtHour(h) {
+    const period = h < 12 ? "AM" : "PM";
+    const h12    = h % 12 === 0 ? 12 : h % 12;
+    return h12 + ":00 " + period;
+  }
   const shiftTimes = {
-    C1: isDST ? "8:00 AM – 4:00 PM" : "7:00 AM – 3:00 PM",
-    C2: isDST ? "4:00 PM – 12:00 AM" : "3:00 PM – 11:00 PM",
-    C3: isDST ? "10:00 AM – 5:00 PM" : "9:00 AM – 4:00 PM",
+    C1: fmtHour(shiftTimesRaw.C1.s) + " – " + fmtHour(shiftTimesRaw.C1.e),
+    C2: fmtHour(shiftTimesRaw.C2.s) + " – " + fmtHour(shiftTimesRaw.C2.e),
+    C3: fmtHour(shiftTimesRaw.C3.s) + " – " + fmtHour(shiftTimesRaw.C3.e),
   };
 
   const meta = {

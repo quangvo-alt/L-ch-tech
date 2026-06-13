@@ -304,11 +304,12 @@ body::before {
   background:linear-gradient(90deg,rgba(30,58,138,.6),rgba(15,32,87,.6));
   border:1px solid rgba(99,179,237,.15);
   border-radius:8px;
-  display:flex; align-items:center; gap:8px; flex-wrap:wrap;
+  display:flex; align-items:center; justify-content:center; gap:8px; flex-wrap:wrap;
+  text-align:center;
 }
 #quote-icon   { font-size:14px; flex-shrink:0; }
-#quote-text   { font-size:11px; color:#cbd5e1; font-style:italic; flex:1; line-height:1.4; }
-#quote-author { font-size:10px; color:#60a5fa; font-weight:700; flex-shrink:0; white-space:nowrap; }
+#quote-text   { font-size:11px; color:#cbd5e1; font-style:italic; line-height:1.4; }
+#quote-author { font-size:10px; color:#60a5fa; font-weight:700; white-space:nowrap; }
 
 /* ── DESKTOP (≥ 900px) ── */
 @media (min-width:900px) {
@@ -363,9 +364,9 @@ body::before {
     <div class="dt"  style="font-size:10px;color:#93c5fd;margin-top:1px;font-weight:600;letter-spacing:1px;">${dateStr}</div>
   </div>
   <div id="stats-row">
-    <div class="stat-chip"><span class="n" style="color:#4ade80;">${totalWorking}</span><span class="l" style="color:#4ade80;">Làm</span></div>
+    <div class="stat-chip"><span class="n" style="color:#4ade80;">${totalWorking}</span><span class="l" style="color:#4ade80;">Work</span></div>
     ${statChipsHtml}
-    <div class="stat-chip"><span class="n" style="color:#fbbf24;">${totalAll}</span><span class="l" style="color:#fbbf24;">Tổng</span></div>
+    <div class="stat-chip"><span class="n" style="color:#fbbf24;">${totalAll}</span><span class="l" style="color:#fbbf24;">Total</span></div>
     <button id="dlBtn" onclick="copyImg()">📋 Copy</button>
     <span id="status"></span>
   </div>

@@ -134,7 +134,6 @@ html { background:#0B1426; }
 body {
   font-family:'Inter',sans-serif;
   background:#0B1426;
-  min-width:1200px;
   padding-bottom:20px;
   position:relative;
 }
@@ -147,18 +146,23 @@ body::before {
 }
 #topbar {
   position:relative; z-index:1;
-  display:flex; align-items:center; justify-content:space-between;
-  padding:12px 24px 10px;
+  display:flex; flex-direction:column; gap:10px;
+  padding:12px 16px 10px;
   background:linear-gradient(90deg,#0f2057,#1e3a8a);
   border-bottom:1px solid rgba(99,179,237,.2);
   margin-bottom:12px;
 }
+#topbar-row1 { display:flex; align-items:center; justify-content:space-between; }
+#topbar-date { text-align:center; }
+#stats-row {
+  display:flex; align-items:center; flex-wrap:wrap; gap:6px; justify-content:center;
+}
 #main {
   position:relative; z-index:1;
   display:grid;
-  grid-template-columns:1fr 1fr 1fr 320px;
+  grid-template-columns:1fr;
   gap:10px;
-  padding:0 12px;
+  padding:0 10px;
 }
 #other-col {
   border-radius:12px;
@@ -168,42 +172,50 @@ body::before {
 }
 #footer {
   position:relative; z-index:1;
-  text-align:center; margin-top:10px; padding:8px 0;
+  text-align:center; margin-top:10px; padding:8px 12px;
   border-top:1px solid rgba(255,255,255,.07);
-  font-size:11px; color:#94a3b8; letter-spacing:.8px;
+  font-size:11px; color:#94a3b8; letter-spacing:.5px; line-height:1.6;
 }
 #dlBtn {
-  padding:7px 16px;
+  padding:7px 14px;
   background:rgba(255,255,255,.1); color:#e0f2fe;
   border:1px solid rgba(99,179,237,.35); border-radius:8px;
   font-family:'Inter',sans-serif; font-size:13px; font-weight:700;
-  cursor:pointer; margin-left:12px;
+  cursor:pointer;
 }
 #dlBtn:hover    { background:rgba(255,255,255,.18); }
 #dlBtn:disabled { opacity:.4; cursor:default; }
-#status { font-size:11px; color:#38bdf8; margin-left:10px; }
+#status { font-size:11px; color:#38bdf8; }
+@media (min-width:900px) {
+  #topbar { flex-direction:row; align-items:center; justify-content:space-between; padding:12px 24px 10px; }
+  #topbar-date { flex:0 0 auto; }
+  #stats-row { flex-wrap:nowrap; justify-content:flex-end; }
+  #main { grid-template-columns:1fr 1fr 1fr 320px; padding:0 12px; }
+}
 </style>
 </head>
 <body>
 
 <div id="topbar">
-  <div style="display:flex;align-items:center;gap:10px;">
-    <div style="width:10px;height:10px;border-radius:50%;background:#38bdf8;flex-shrink:0;"></div>
-    <span style="font-size:13px;font-weight:900;color:#e0f2fe;letter-spacing:3px;text-transform:uppercase;">Tech Support</span>
+  <div id="topbar-row1">
+    <div style="display:flex;align-items:center;gap:8px;">
+      <div style="width:10px;height:10px;border-radius:50%;background:#38bdf8;flex-shrink:0;"></div>
+      <span style="font-size:13px;font-weight:900;color:#e0f2fe;letter-spacing:3px;text-transform:uppercase;">Tech Support</span>
+    </div>
+    <div id="topbar-date">
+      <div style="font-size:26px;font-weight:900;color:#fff;line-height:1;text-align:center;">${dayName}</div>
+      <div style="font-size:12px;color:#93c5fd;margin-top:2px;font-weight:600;letter-spacing:1px;text-align:center;">${dateStr}</div>
+    </div>
   </div>
-  <div style="text-align:center;">
-    <div style="font-size:30px;font-weight:900;color:#fff;line-height:1;">${dayName}</div>
-    <div style="font-size:13px;color:#93c5fd;margin-top:2px;font-weight:600;letter-spacing:2px;">${dateStr}</div>
-  </div>
-  <div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap;justify-content:flex-end;">
-    <div style="display:flex;flex-direction:column;align-items:center;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);border-radius:10px;padding:6px 14px;">
-      <span style="font-size:20px;font-weight:900;color:#4ade80;line-height:1;">${totalWorking}</span>
-      <span style="font-size:11px;font-weight:700;color:#4ade80;margin-top:2px;">Đi làm</span>
+  <div id="stats-row">
+    <div style="display:flex;flex-direction:column;align-items:center;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);border-radius:10px;padding:6px 12px;">
+      <span style="font-size:18px;font-weight:900;color:#4ade80;line-height:1;">${totalWorking}</span>
+      <span style="font-size:10px;font-weight:700;color:#4ade80;margin-top:2px;">Đi làm</span>
     </div>
     ${statChipsHtml}
-    <div style="display:flex;flex-direction:column;align-items:center;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);border-radius:10px;padding:6px 14px;">
-      <span style="font-size:20px;font-weight:900;color:#fbbf24;line-height:1;">${totalAll}</span>
-      <span style="font-size:11px;font-weight:700;color:#fbbf24;margin-top:2px;">Tổng</span>
+    <div style="display:flex;flex-direction:column;align-items:center;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);border-radius:10px;padding:6px 12px;">
+      <span style="font-size:18px;font-weight:900;color:#fbbf24;line-height:1;">${totalAll}</span>
+      <span style="font-size:10px;font-weight:700;color:#fbbf24;margin-top:2px;">Tổng</span>
     </div>
     <button id="dlBtn" onclick="dlPng()">⬇ Tải PNG</button>
     <span id="status"></span>

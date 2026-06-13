@@ -16,6 +16,11 @@ function doGet() {
   const dateStr  = Utilities.formatDate(today, tz, "MMMM dd, yyyy");
   const dayName  = Utilities.formatDate(today, tz, "EEEE");
 
+  // Detect CST vs CDT dynamically (VN shifts are fixed UTC+7)
+  const tzOffset  = Utilities.formatDate(new Date(), tz, "Z"); // "-0600" or "-0500"
+  const isDST     = tzOffset === "-0500";
+  const tzLabel   = isDST ? "CDT (UTC−5)" : "CST (UTC−6)";
+
   const lastRow = sheet.getLastRow();
   if (lastRow < 3) return HtmlService.createHtmlOutput("<p>Không có dữ liệu</p>");
   const raw = sheet.getRange(3, 7, lastRow - 2, 3).getValues();
@@ -33,17 +38,24 @@ function doGet() {
   });
 
   return HtmlService
-    .createHtmlOutput(buildHtml(grouped, shiftOrder, dateStr, dayName))
+    .createHtmlOutput(buildHtml(grouped, shiftOrder, dateStr, dayName, isDST, tzLabel))
     .setTitle("Tech Shift " + dateStr)
     .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
 }
 
-function buildHtml(grouped, shiftOrder, dateStr, dayName) {
+function buildHtml(grouped, shiftOrder, dateStr, dayName, isDST, tzLabel) {
+
+  // VN fixed times (UTC+7) → CST (UTC−6) = −13h | CDT (UTC−5) = −12h
+  const shiftTimes = {
+    C1: isDST ? "8:00 AM – 4:00 PM" : "7:00 AM – 3:00 PM",
+    C2: isDST ? "4:00 PM – 12:00 AM" : "3:00 PM – 11:00 PM",
+    C3: isDST ? "10:00 AM – 5:00 PM" : "9:00 AM – 4:00 PM",
+  };
 
   const meta = {
-    C1:  { label:"Ca 1 — Công chuẩn",     time:"7:00 AM – 3:00 PM",  grad:"#1d4ed8,#3b82f6", avBg:"#dbeafe", avTxt:"#1d4ed8", statClr:"#60a5fa", chipBg:"#1e1b4b", chipTxt:"#c7d2fe", chipBd:"#3730a3", lbBg:"#1d4ed8", lbTxt:"#eff6ff" },
-    C2:  { label:"Ca 2 — Công chuẩn",     time:"3:00 PM – 11:00 PM", grad:"#b45309,#f97316", avBg:"#ffedd5", avTxt:"#b45309", statClr:"#fb923c", chipBg:"#431407", chipTxt:"#fed7aa", chipBd:"#9a3412", lbBg:"#c2410c", lbTxt:"#fff7ed" },
-    C3:  { label:"Ca 3 — Công chuẩn",     time:"9:00 AM – 4:00 PM",  grad:"#15803d,#22c55e", avBg:"#dcfce7", avTxt:"#15803d", statClr:"#4ade80", chipBg:"#052e16", chipTxt:"#bbf7d0", chipBd:"#166534", lbBg:"#15803d", lbTxt:"#f0fdf4" },
+    C1:  { label:"Shift 1", time:shiftTimes.C1, grad:"#1d4ed8,#3b82f6", avBg:"#dbeafe", avTxt:"#1d4ed8", statClr:"#60a5fa", chipBg:"#1e1b4b", chipTxt:"#c7d2fe", chipBd:"#3730a3", lbBg:"#1d4ed8", lbTxt:"#eff6ff" },
+    C2:  { label:"Shift 2", time:shiftTimes.C2, grad:"#b45309,#f97316", avBg:"#ffedd5", avTxt:"#b45309", statClr:"#fb923c", chipBg:"#431407", chipTxt:"#fed7aa", chipBd:"#9a3412", lbBg:"#c2410c", lbTxt:"#fff7ed" },
+    C3:  { label:"Shift 3", time:shiftTimes.C3, grad:"#15803d,#22c55e", avBg:"#dcfce7", avTxt:"#15803d", statClr:"#4ade80", chipBg:"#052e16", chipTxt:"#bbf7d0", chipBd:"#166534", lbBg:"#15803d", lbTxt:"#f0fdf4" },
     ME:  { label:"Mac Energy — Nghỉ có công", time:"",               statClr:"#a78bfa", chipBg:"#2e1065", chipTxt:"#ddd6fe", chipBd:"#5b21b6", lbBg:"#4c1d95", lbTxt:"#ede9fe" },
     NP:  { label:"Nghỉ phép năm — Có công",  time:"",               statClr:"#fbbf24", chipBg:"#1c1407", chipTxt:"#fde68a", chipBd:"#92400e", lbBg:"#92400e", lbTxt:"#fef3c7" },
     HO:  { label:"Nghỉ lễ / Bù lễ — Có công", time:"",             statClr:"#f87171", chipBg:"#450a0a", chipTxt:"#fecaca", chipBd:"#7f1d1d", lbBg:"#991b1b", lbTxt:"#fee2e2" },
@@ -87,7 +99,7 @@ function buildHtml(grouped, shiftOrder, dateStr, dayName) {
       <div class="card-hdr" style="background:linear-gradient(90deg,${m.grad});">
         <span class="shift-lbl">${s}</span>
         <span class="shift-sub">${m.label}</span>
-        <span class="shift-time">${m.time}</span>
+        <span class="shift-time">${m.time} <span class="shift-tz">${tzLabel}</span></span>
         <span class="shift-cnt">${people.length}</span>
       </div>
       <div style="background:#fff;padding:3px 10px 6px;">${rows || '<span style="font-size:11px;color:#ccc;">—</span>'}</div>
@@ -191,7 +203,8 @@ body::before {
 }
 .card-hdr .shift-lbl { font-size:14px; font-weight:900; color:#fff; }
 .card-hdr .shift-sub { font-size:10px; font-weight:600; color:rgba(255,255,255,.75); }
-.card-hdr .shift-time{ font-size:9px;  color:rgba(255,255,255,.5); margin-left:auto; }
+.card-hdr .shift-time{ font-size:9px;  color:rgba(255,255,255,.6); margin-left:auto; }
+.card-hdr .shift-tz  { font-size:8px;  color:rgba(255,255,255,.4); }
 .card-hdr .shift-cnt { background:rgba(255,255,255,.22); border-radius:999px; padding:1px 8px; font-size:11px; font-weight:900; color:#fff; margin-left:4px; }
 
 /* person row compact */
@@ -243,6 +256,7 @@ body::before {
   .card-hdr .shift-lbl { font-size:16px; }
   .card-hdr .shift-sub { font-size:13px; }
   .card-hdr .shift-time{ font-size:12px; }
+  .card-hdr .shift-tz  { font-size:10px; }
   .card-hdr .shift-cnt { font-size:13px; }
   .p-row { gap:9px; padding:5px 0; }
   .p-av  { width:28px; height:28px; font-size:10px; }
@@ -288,7 +302,7 @@ body::before {
 </div>
 
 <div id="footer">
-  C1: 7:00 AM – 3:00 PM &nbsp;·&nbsp; C2: 3:00 PM – 11:00 PM &nbsp;·&nbsp; C3: 9:00 AM – 4:00 PM &nbsp;·&nbsp; All times CST (UTC−6) &nbsp;·&nbsp; TECH TEAM
+  Shift 1: ${shiftTimes.C1} &nbsp;·&nbsp; Shift 2: ${shiftTimes.C2} &nbsp;·&nbsp; Shift 3: ${shiftTimes.C3} &nbsp;·&nbsp; All times <strong>${tzLabel}</strong> &nbsp;·&nbsp; TECH TEAM
 </div>
 
 <script>

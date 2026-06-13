@@ -137,7 +137,7 @@ function buildHtml(grouped, shiftOrder, dateStr, dayName, shiftTimesRaw, tzLabel
   // Top stat chips
   const statChipsHtml = shiftOrder.map(s => {
     const m = meta[s]; const n = (grouped[s]||[]).length;
-    return `<div class="stat-chip"><span class="n" style="color:${m.statClr};">${n}</span><span class="l" style="color:${m.statClr};">${s}</span></div>`;
+    return `<div class="stat-chip"><span class="n outfit" style="color:${m.statClr};">${n}</span><span class="l" style="color:${m.statClr};">${s}</span></div>`;
   }).join("");
 
   // Person row inside shift card
@@ -161,10 +161,10 @@ function buildHtml(grouped, shiftOrder, dateStr, dayName, shiftTimesRaw, tzLabel
     const id   = s === "C3" ? ' id="card-c3"' : '';
     return `<div${id} style="border-radius:10px;overflow:hidden;border:1px solid rgba(255,255,255,.08);display:flex;flex-direction:column;">
       <div class="card-hdr" style="background:linear-gradient(90deg,${m.grad});">
-        <span class="shift-lbl">${s}</span>
+        <span class="shift-lbl outfit">${s}</span>
         <span class="shift-sub">${m.label}</span>
         <span class="shift-time">${m.time} <span class="shift-tz">${tzLabel}</span></span>
-        <span class="shift-cnt">${people.length}</span>
+        <span class="shift-cnt outfit">${people.length}</span>
       </div>
       <div style="background:#fff;padding:3px 10px 6px;">${rows || '<span style="font-size:11px;color:#ccc;">—</span>'}</div>
     </div>`;
@@ -201,13 +201,13 @@ function buildHtml(grouped, shiftOrder, dateStr, dayName, shiftTimesRaw, tzLabel
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Tech Shift ${dateStr}</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"><\/script>
 <style>
 * { box-sizing:border-box; margin:0; padding:0; }
 html { background:#0B1426; }
 body {
-  font-family:'Inter',sans-serif;
+  font-family:'Plus Jakarta Sans',sans-serif;
   background:#0B1426;
   padding-bottom:8px;
   position:relative;
@@ -230,6 +230,8 @@ body::before {
   margin-bottom:6px;
   gap:6px;
 }
+/* Outfit — tiêu đề & số */
+.outfit { font-family:'Outfit',sans-serif; }
 #topbar-brand { display:flex; align-items:center; gap:5px; flex-shrink:0; }
 #topbar-date  { text-align:center; flex:1; }
 #stats-row    { display:flex; align-items:center; gap:4px; flex-shrink:0; }
@@ -292,7 +294,7 @@ body::before {
   padding:4px 10px;
   background:rgba(255,255,255,.1); color:#e0f2fe;
   border:1px solid rgba(99,179,237,.35); border-radius:7px;
-  font-family:'Inter',sans-serif; font-size:11px; font-weight:700;
+  font-family:'Plus Jakarta Sans',sans-serif; font-size:11px; font-weight:700;
   cursor:pointer; flex-shrink:0;
 }
 #dlBtn:disabled { opacity:.4; cursor:default; }
@@ -357,16 +359,16 @@ body::before {
 <div id="topbar">
   <div id="topbar-brand">
     <div style="width:8px;height:8px;border-radius:50%;background:#38bdf8;flex-shrink:0;"></div>
-    <span style="font-size:11px;font-weight:900;color:#e0f2fe;letter-spacing:2px;text-transform:uppercase;">Tech Support</span>
+    <span class="outfit" style="font-size:11px;font-weight:900;color:#e0f2fe;letter-spacing:2px;text-transform:uppercase;">Tech Support</span>
   </div>
   <div id="topbar-date">
-    <div class="day" style="font-size:20px;font-weight:900;color:#fff;line-height:1;">${dayName}</div>
-    <div class="dt"  style="font-size:10px;color:#93c5fd;margin-top:1px;font-weight:600;letter-spacing:1px;">${dateStr}</div>
+    <div class="day outfit" style="font-size:20px;font-weight:900;color:#fff;line-height:1;">${dayName}</div>
+    <div class="dt outfit" style="font-size:10px;color:#93c5fd;margin-top:1px;font-weight:700;letter-spacing:1px;">${dateStr}</div>
   </div>
   <div id="stats-row">
-    <div class="stat-chip"><span class="n" style="color:#4ade80;">${totalWorking}</span><span class="l" style="color:#4ade80;">Work</span></div>
+    <div class="stat-chip"><span class="n outfit" style="color:#4ade80;">${totalWorking}</span><span class="l" style="color:#4ade80;">Work</span></div>
     ${statChipsHtml}
-    <div class="stat-chip"><span class="n" style="color:#fbbf24;">${totalAll}</span><span class="l" style="color:#fbbf24;">Total</span></div>
+    <div class="stat-chip"><span class="n outfit" style="color:#fbbf24;">${totalAll}</span><span class="l" style="color:#fbbf24;">Total</span></div>
     <button id="dlBtn" onclick="copyImg()">📋 Copy</button>
     <span id="status"></span>
   </div>

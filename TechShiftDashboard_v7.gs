@@ -16,16 +16,9 @@ function doGet() {
   const dateStr  = Utilities.formatDate(today, tz, "MMMM dd, yyyy");
   const dayName  = Utilities.formatDate(today, tz, "EEEE");
 
-  // Convert VN fixed times (UTC+7) to any local timezone dynamically
-  const now         = new Date();
-  const tzOffsetStr = Utilities.formatDate(now, tz, "Z"); // e.g. "-0600", "-0500", "-0400"
-  const tzAbbr      = Utilities.formatDate(now, tz, "z"); // e.g. "CST", "CDT", "EST", "EDT"
-  const sign        = tzOffsetStr[0] === "-" ? -1 : 1;
-  const hh          = parseInt(tzOffsetStr.slice(1,3), 10);
-  const mm          = parseInt(tzOffsetStr.slice(3,5), 10);
-  const localOffset = sign * (hh + mm / 60); // e.g. -6, -5, -4
-  const utcPart     = "UTC" + (localOffset >= 0 ? "+" : "") + localOffset;
-  const tzLabel     = tzAbbr + " (" + utcPart + ")";
+  // Fixed: CDT (Central Daylight Time) UTC-5
+  const localOffset = -5;
+  const tzLabel     = "CDT (UTC−5)";
 
   function vnToLocal(vnHour) {
     // VN = UTC+7, so UTC = VN - 7; local = UTC + localOffset
@@ -93,12 +86,9 @@ function buildHtml(grouped, shiftOrder, dateStr, dayName, shiftTimesRaw, tzLabel
   function cleanRole(raw) { return (raw || "").trim().replace(/[,;.]+$/, "").trim(); }
   function roleStyle(role) {
     const r = role.toLowerCase();
-    if (r.includes("mgr"))                          return "background:#fef3c7;color:#92400e;border:1px solid #fcd34d;";   // Amber — Manager
-    if (r.includes("sup") && !r.includes("build"))  return "background:#dbeafe;color:#1d4ed8;border:1px solid #93c5fd;";   // Blue — Tech Support
-    if (r.includes("build"))                         return "background:#ffedd5;color:#c2410c;border:1px solid #fdba74;";   // Orange — Tech Build
-    if (r.includes("lobby"))                         return "background:#ede9fe;color:#5b21b6;border:1px solid #c4b5fd;";   // Purple — Tech Lobby
-    if (r.includes("ba"))                            return "background:#d1fae5;color:#065f46;border:1px solid #6ee7b7;";   // Green — BA
-    return "background:#f1f5f9;color:#475569;border:1px solid #cbd5e1;";  // Gray — default
+    if (r.includes("mgr"))                                    return "background:#fef3c7;color:#92400e;border:1px solid #fcd34d;font-weight:800;";  // Amber — Manager
+    if (r.includes("supr") || r.includes("supervisor"))       return "background:#dbeafe;color:#1d4ed8;border:1px solid #93c5fd;font-weight:800;";  // Blue — Supervisor
+    return "";  // no style for other roles
   }
   function initials(raw) {
     return cleanName(raw).split(/\s+/).slice(-2).map(w=>w[0].toUpperCase()).join("");
@@ -118,7 +108,8 @@ function buildHtml(grouped, shiftOrder, dateStr, dayName, shiftTimesRaw, tzLabel
     const ini      = initials(p.name);
     const name     = cleanName(p.name);
     const role     = cleanRole(p.dept);   // column H = Function/Role
-    const roleHtml = role ? `<span class="p-role" style="${roleStyle(role)}">${role}</span>` : "";
+    const rs       = roleStyle(role);
+    const roleHtml = role ? `<span class="${rs ? 'p-role p-badge' : 'p-role'}" style="${rs}">${role}</span>` : "";
     return `<div class="p-row">
       <div class="p-av" style="background:${m.avBg};color:${m.avTxt};">${ini}</div>
       <span class="p-nm">${name}</span>${roleHtml}
@@ -248,7 +239,8 @@ body::before {
 .p-row:last-child { border-bottom:none; }
 .p-av  { width:22px; height:22px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:8px; font-weight:900; flex-shrink:0; }
 .p-nm   { font-size:11px; font-weight:700; color:#0f172a; }
-.p-role { font-size:9px; font-weight:700; margin-left:4px; padding:1px 6px; border-radius:4px; white-space:nowrap; }
+.p-role  { font-size:9px; font-weight:600; margin-left:4px; color:#64748b; white-space:nowrap; }
+.p-badge { padding:1px 6px; border-radius:4px; border-width:1px; border-style:solid; }
 .p-dp  { font-size:9px;  color:#94a3b8; font-weight:500; margin-left:3px; }
 
 /* other section compact */

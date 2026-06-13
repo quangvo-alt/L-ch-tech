@@ -17,12 +17,15 @@ function doGet() {
   const dayName  = Utilities.formatDate(today, tz, "EEEE");
 
   // Convert VN fixed times (UTC+7) to any local timezone dynamically
-  const tzOffsetStr = Utilities.formatDate(new Date(), tz, "Z"); // e.g. "-0600", "-0500", "-0400"
+  const now         = new Date();
+  const tzOffsetStr = Utilities.formatDate(now, tz, "Z"); // e.g. "-0600", "-0500", "-0400"
+  const tzAbbr      = Utilities.formatDate(now, tz, "z"); // e.g. "CST", "CDT", "EST", "EDT"
   const sign        = tzOffsetStr[0] === "-" ? -1 : 1;
   const hh          = parseInt(tzOffsetStr.slice(1,3), 10);
   const mm          = parseInt(tzOffsetStr.slice(3,5), 10);
   const localOffset = sign * (hh + mm / 60); // e.g. -6, -5, -4
-  const tzLabel     = "UTC" + (localOffset >= 0 ? "+" : "") + localOffset;
+  const utcPart     = "UTC" + (localOffset >= 0 ? "+" : "") + localOffset;
+  const tzLabel     = tzAbbr + " (" + utcPart + ")";
 
   function vnToLocal(vnHour) {
     // VN = UTC+7, so UTC = VN - 7; local = UTC + localOffset

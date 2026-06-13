@@ -9,6 +9,7 @@
 function doGet() {
   const ss    = SpreadsheetApp.getActiveSpreadsheet();
   const sheet = ss.getSheetByName("Filter");
+  if (!sheet) return HtmlService.createHtmlOutput("<p>❌ Không tìm thấy tab 'Filter'. Vui lòng kiểm tra tên tab trong Google Sheet.</p>");
 
   const dateCell = sheet.getRange("I1").getValue();
   const tz       = ss.getSpreadsheetTimeZone();
@@ -30,11 +31,11 @@ function doGet() {
     return h12 + ":00 " + period;
   }
 
-  // VN fixed: Shift1 20→28(=4), Shift2 4→16(noon), Shift3 22→29(=5)
+  // VN fixed: C1 8PM→4AM, C2 4AM→12PM(noon), C3 10PM→5AM
   const shiftTimesRaw = {
-    C1: { s: vnToLocal(20),   e: vnToLocal(28 % 24) },
-    C2: { s: vnToLocal(4),    e: vnToLocal(16) },
-    C3: { s: vnToLocal(22),   e: vnToLocal(29 % 24) },
+    C1: { s: vnToLocal(20), e: vnToLocal(4)  },
+    C2: { s: vnToLocal(4),  e: vnToLocal(12) },
+    C3: { s: vnToLocal(22), e: vnToLocal(5)  },
   };
 
   const lastRow = sheet.getLastRow();
@@ -75,7 +76,7 @@ function doGet() {
     { text: "Good things come to people who wait, but better things come to those who go out and get them.", author: "Unknown" },
     { text: "If you do what you always did, you will get what you always got.", author: "Albert Einstein" },
   ];
-  const dayOfYear = Math.floor((today - new Date(today.getFullYear(), 0, 0)) / 86400000);
+  const dayOfYear = parseInt(Utilities.formatDate(today, tz, "D"), 10);
   const quote     = quotes[dayOfYear % quotes.length];
 
   const shiftOrder = ["C1","C2","C3","ME","NP","HO","OFF"];
@@ -128,7 +129,7 @@ function buildHtml(grouped, shiftOrder, dateStr, dayName, shiftTimesRaw, tzLabel
     return "";  // no style for other roles
   }
   function initials(raw) {
-    return cleanName(raw).split(/\s+/).slice(-2).map(w=>w[0].toUpperCase()).join("");
+    return cleanName(raw).split(/\s+/).filter(w=>w.length>0).slice(-2).map(w=>w[0].toUpperCase()).join("") || "?";
   }
 
   const totalWorking = ["C1","C2","C3"].reduce((s,k)=>s+(grouped[k]||[]).length,0);
@@ -173,9 +174,9 @@ function buildHtml(grouped, shiftOrder, dateStr, dayName, shiftTimesRaw, tzLabel
   // Name chip for "other" col
   function chip(p, m) {
     const name = cleanName(p.name);
-    const dept = p.dept && p.dept.toUpperCase() !== "TECH"
-      ? ` <span style="font-size:9px;opacity:.7;">${p.dept}</span>` : "";
-    return `<div class="oth-chip" style="background:${m.chipBg};color:${m.chipTxt};border-color:${m.chipBd};">${name}${dept}</div>`;
+    const role = cleanRole(p.dept);
+    const roleHtml = role ? ` <span style="font-size:9px;opacity:.7;">${role}</span>` : "";
+    return `<div class="oth-chip" style="background:${m.chipBg};color:${m.chipTxt};border-color:${m.chipBd};">${name}${roleHtml}</div>`;
   }
 
   // Section inside "other" col

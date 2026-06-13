@@ -103,6 +103,7 @@ function doGet() {
     const dept  = (row[1] || "").toString().trim();
     const shift = (row[2] || "").toString().trim().toUpperCase();
     if (!name) return;
+    if (/[0-9:\/]/.test(name)) return;  // tên chứa số / ":" / "/" → dòng rác (vd "Shift 1 : 7H AM...") → bỏ qua
     if (grouped[shift] !== undefined)  grouped[shift].push({ name, dept });
     else if (dept)                     grouped["OFF"].push({ name, dept });  // sai form nhưng có vai trò → mặc định OFF
     // sai form + không có vai trò → bỏ qua (dòng rác: lời chào, chú thích...)

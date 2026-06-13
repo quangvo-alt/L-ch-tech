@@ -61,21 +61,18 @@ function buildHtml(grouped, shiftOrder, dateStr, dayName) {
   // Top stat chips
   const statChipsHtml = shiftOrder.map(s => {
     const m = meta[s]; const n = (grouped[s]||[]).length;
-    return `<div style="display:flex;flex-direction:column;align-items:center;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);border-radius:10px;padding:6px 14px;min-width:52px;">
-      <span style="font-size:20px;font-weight:900;color:${m.statClr};line-height:1;">${n}</span>
-      <span style="font-size:11px;font-weight:700;color:${m.statClr};margin-top:2px;">${s}</span>
-    </div>`;
+    return `<div class="stat-chip"><span class="n" style="color:${m.statClr};">${n}</span><span class="l" style="color:${m.statClr};">${s}</span></div>`;
   }).join("");
 
   // Person row inside shift card
-  function pRow(p, m, last) {
+  function pRow(p, m) {
     const ini  = initials(p.name);
     const name = cleanName(p.name);
     const dept = p.dept && p.dept.toUpperCase() !== "TECH"
-      ? `<span style="font-size:11px;color:#94a3b8;margin-left:5px;font-weight:500;">${p.dept}</span>` : "";
-    return `<div style="display:flex;align-items:center;gap:9px;padding:5px 0;${last?"":"border-bottom:1px solid #f1f5f9;"}">
-      <div style="width:28px;height:28px;border-radius:50%;background:${m.avBg};color:${m.avTxt};display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:900;flex-shrink:0;">${ini}</div>
-      <span style="font-size:14px;font-weight:700;color:#0f172a;">${name}</span>${dept}
+      ? `<span class="p-dp">${p.dept}</span>` : "";
+    return `<div class="p-row">
+      <div class="p-av" style="background:${m.avBg};color:${m.avTxt};">${ini}</div>
+      <span class="p-nm">${name}</span>${dept}
     </div>`;
   }
 
@@ -83,15 +80,16 @@ function buildHtml(grouped, shiftOrder, dateStr, dayName) {
   function shiftCard(s) {
     const people = grouped[s]||[];
     const m = meta[s];
-    const rows = people.map((p,i)=>pRow(p,m,i===people.length-1)).join("");
-    return `<div style="border-radius:12px;overflow:hidden;border:1px solid rgba(255,255,255,.08);display:flex;flex-direction:column;">
-      <div style="background:linear-gradient(90deg,${m.grad});padding:10px 14px;display:flex;align-items:center;gap:8px;">
-        <span style="font-size:16px;font-weight:900;color:#fff;letter-spacing:.5px;">${s}</span>
-        <span style="font-size:13px;font-weight:600;color:rgba(255,255,255,.8);">${m.label}</span>
-        <span style="font-size:12px;color:rgba(255,255,255,.55);margin-left:auto;">${m.time}</span>
-        <span style="background:rgba(255,255,255,.22);border-radius:999px;padding:2px 10px;font-size:13px;font-weight:900;color:#fff;margin-left:6px;">${people.length}</span>
+    const rows = people.map(p=>pRow(p,m)).join("");
+    const id   = s === "C3" ? ' id="card-c3"' : '';
+    return `<div${id} style="border-radius:10px;overflow:hidden;border:1px solid rgba(255,255,255,.08);display:flex;flex-direction:column;">
+      <div class="card-hdr" style="background:linear-gradient(90deg,${m.grad});">
+        <span class="shift-lbl">${s}</span>
+        <span class="shift-sub">${m.label}</span>
+        <span class="shift-time">${m.time}</span>
+        <span class="shift-cnt">${people.length}</span>
       </div>
-      <div style="background:#fff;padding:4px 12px 8px;">${rows || '<span style="font-size:13px;color:#ccc;">—</span>'}</div>
+      <div style="background:#fff;padding:3px 10px 6px;">${rows || '<span style="font-size:11px;color:#ccc;">—</span>'}</div>
     </div>`;
   }
 
@@ -99,8 +97,8 @@ function buildHtml(grouped, shiftOrder, dateStr, dayName) {
   function chip(p, m) {
     const name = cleanName(p.name);
     const dept = p.dept && p.dept.toUpperCase() !== "TECH"
-      ? ` <span style="font-size:10px;opacity:.7;">${p.dept}</span>` : "";
-    return `<div style="border-radius:6px;padding:5px 11px;font-size:13px;font-weight:700;background:${m.chipBg};color:${m.chipTxt};border:1px solid ${m.chipBd};white-space:nowrap;">${name}${dept}</div>`;
+      ? ` <span style="font-size:9px;opacity:.7;">${p.dept}</span>` : "";
+    return `<div class="oth-chip" style="background:${m.chipBg};color:${m.chipTxt};border-color:${m.chipBd};">${name}${dept}</div>`;
   }
 
   // Section inside "other" col
@@ -108,13 +106,13 @@ function buildHtml(grouped, shiftOrder, dateStr, dayName) {
     const people = grouped[s]||[]; const m = meta[s];
     const chips  = people.length
       ? people.map(p=>chip(p,m)).join("")
-      : `<span style="font-size:12px;color:#334155;font-style:italic;">Không có</span>`;
-    return `<div style="margin-bottom:14px;">
-      <div style="display:inline-flex;align-items:center;gap:5px;border-radius:6px;padding:4px 11px;background:${m.lbBg};color:${m.lbTxt};font-size:12px;font-weight:800;margin-bottom:7px;">
+      : `<span style="font-size:10px;color:#334155;font-style:italic;">Không có</span>`;
+    return `<div class="oth-sec">
+      <div class="oth-lbl" style="background:${m.lbBg};color:${m.lbTxt};">
         ${s} — ${m.label}
-        <span style="background:rgba(255,255,255,.2);border-radius:999px;padding:0 7px;font-size:12px;">${people.length}</span>
+        <span style="background:rgba(255,255,255,.2);border-radius:999px;padding:0 6px;">${people.length}</span>
       </div>
-      <div style="display:flex;flex-wrap:wrap;gap:5px;">${chips}</div>
+      <div class="oth-chips">${chips}</div>
     </div>`;
   }
 
@@ -134,7 +132,7 @@ html { background:#0B1426; }
 body {
   font-family:'Inter',sans-serif;
   background:#0B1426;
-  padding-bottom:20px;
+  padding-bottom:8px;
   position:relative;
 }
 body::before {
@@ -144,80 +142,134 @@ body::before {
     linear-gradient(90deg,rgba(99,179,237,.04) 1px,transparent 1px);
   background-size:40px 40px;
 }
+
+/* ── MOBILE-FIRST (default) ── */
 #topbar {
   position:relative; z-index:1;
-  display:flex; flex-direction:column; gap:10px;
-  padding:12px 16px 10px;
+  display:flex; align-items:center; justify-content:space-between;
+  padding:6px 10px;
   background:linear-gradient(90deg,#0f2057,#1e3a8a);
   border-bottom:1px solid rgba(99,179,237,.2);
-  margin-bottom:12px;
+  margin-bottom:6px;
+  gap:6px;
 }
-#topbar-row1 { display:flex; align-items:center; justify-content:space-between; }
-#topbar-date { text-align:center; }
-#stats-row {
-  display:flex; align-items:center; flex-wrap:wrap; gap:6px; justify-content:center;
+#topbar-brand { display:flex; align-items:center; gap:5px; flex-shrink:0; }
+#topbar-date  { text-align:center; flex:1; }
+#stats-row    { display:flex; align-items:center; gap:4px; flex-shrink:0; }
+.stat-chip    {
+  display:flex; flex-direction:column; align-items:center;
+  background:rgba(255,255,255,.07); border:1px solid rgba(255,255,255,.12);
+  border-radius:8px; padding:3px 7px; min-width:30px;
 }
+.stat-chip .n { font-size:14px; font-weight:900; line-height:1; }
+.stat-chip .l { font-size:9px;  font-weight:700; margin-top:1px; }
+
 #main {
   position:relative; z-index:1;
   display:grid;
-  grid-template-columns:1fr;
-  gap:10px;
-  padding:0 10px;
+  grid-template-columns:1fr 1fr;
+  grid-template-rows:auto auto;
+  gap:5px;
+  padding:0 5px;
 }
+/* C3 + other đều full-width → hàng 2 */
+#card-c3    { grid-column:1; grid-row:2; }
+#other-col  { grid-column:2; grid-row:2; }
+
 #other-col {
-  border-radius:12px;
+  border-radius:8px;
   background:#0d1b35;
   border:1px solid rgba(255,255,255,.08);
-  padding:14px 13px;
+  padding:8px 8px;
 }
-#footer {
-  position:relative; z-index:1;
-  text-align:center; margin-top:10px; padding:8px 12px;
-  border-top:1px solid rgba(255,255,255,.07);
-  font-size:11px; color:#94a3b8; letter-spacing:.5px; line-height:1.6;
+
+/* card header compact */
+.card-hdr {
+  padding:6px 10px;
+  display:flex; align-items:center; gap:5px;
 }
+.card-hdr .shift-lbl { font-size:14px; font-weight:900; color:#fff; }
+.card-hdr .shift-sub { font-size:10px; font-weight:600; color:rgba(255,255,255,.75); }
+.card-hdr .shift-time{ font-size:9px;  color:rgba(255,255,255,.5); margin-left:auto; }
+.card-hdr .shift-cnt { background:rgba(255,255,255,.22); border-radius:999px; padding:1px 8px; font-size:11px; font-weight:900; color:#fff; margin-left:4px; }
+
+/* person row compact */
+.p-row { display:flex; align-items:center; gap:6px; padding:3px 0; border-bottom:1px solid #f1f5f9; }
+.p-row:last-child { border-bottom:none; }
+.p-av  { width:22px; height:22px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:8px; font-weight:900; flex-shrink:0; }
+.p-nm  { font-size:11px; font-weight:700; color:#0f172a; }
+.p-dp  { font-size:9px;  color:#94a3b8; font-weight:500; margin-left:3px; }
+
+/* other section compact */
+.oth-sec  { margin-bottom:8px; }
+.oth-lbl  { display:inline-flex; align-items:center; gap:4px; border-radius:5px; padding:3px 8px; font-size:9px; font-weight:800; margin-bottom:5px; }
+.oth-chips{ display:flex; flex-wrap:wrap; gap:3px; }
+.oth-chip { border-radius:5px; padding:3px 7px; font-size:10px; font-weight:700; border-width:1px; border-style:solid; white-space:nowrap; }
+
+#footer { display:none; }
+
 #dlBtn {
-  padding:7px 14px;
+  padding:4px 10px;
   background:rgba(255,255,255,.1); color:#e0f2fe;
-  border:1px solid rgba(99,179,237,.35); border-radius:8px;
-  font-family:'Inter',sans-serif; font-size:13px; font-weight:700;
-  cursor:pointer;
+  border:1px solid rgba(99,179,237,.35); border-radius:7px;
+  font-family:'Inter',sans-serif; font-size:11px; font-weight:700;
+  cursor:pointer; flex-shrink:0;
 }
-#dlBtn:hover    { background:rgba(255,255,255,.18); }
 #dlBtn:disabled { opacity:.4; cursor:default; }
-#status { font-size:11px; color:#38bdf8; }
+#status { display:none; }
+
+/* ── DESKTOP (≥ 900px) ── */
 @media (min-width:900px) {
-  #topbar { flex-direction:row; align-items:center; justify-content:space-between; padding:12px 24px 10px; }
-  #topbar-date { flex:0 0 auto; }
-  #stats-row { flex-wrap:nowrap; justify-content:flex-end; }
-  #main { grid-template-columns:1fr 1fr 1fr 320px; padding:0 12px; }
+  body { padding-bottom:20px; }
+  #topbar { padding:12px 24px 10px; flex-direction:row; }
+  #topbar-date .day { font-size:30px !important; }
+  #topbar-date .dt  { font-size:13px !important; letter-spacing:2px !important; }
+  .stat-chip { padding:6px 14px; border-radius:10px; min-width:52px; }
+  .stat-chip .n { font-size:20px; }
+  .stat-chip .l { font-size:11px; }
+  #stats-row { gap:7px; }
+  #dlBtn { font-size:13px; padding:7px 16px; }
+  #status { display:inline; font-size:11px; color:#38bdf8; }
+  #main {
+    grid-template-columns:1fr 1fr 1fr 320px;
+    grid-template-rows:auto;
+    gap:10px; padding:0 12px;
+  }
+  #card-c3   { grid-column:auto; grid-row:auto; }
+  #other-col { grid-column:auto; grid-row:auto; padding:14px 13px; }
+  .card-hdr  { padding:10px 14px; }
+  .card-hdr .shift-lbl { font-size:16px; }
+  .card-hdr .shift-sub { font-size:13px; }
+  .card-hdr .shift-time{ font-size:12px; }
+  .card-hdr .shift-cnt { font-size:13px; }
+  .p-row { gap:9px; padding:5px 0; }
+  .p-av  { width:28px; height:28px; font-size:10px; }
+  .p-nm  { font-size:14px; }
+  .p-dp  { font-size:11px; }
+  .oth-lbl  { font-size:12px; padding:4px 11px; }
+  .oth-chip { font-size:13px; padding:5px 11px; border-radius:6px; }
+  .oth-sec  { margin-bottom:14px; }
+  #other-col > div:first-child { font-size:13px; margin-bottom:12px; }
+  #footer { display:block; text-align:center; margin-top:10px; padding:8px 0; border-top:1px solid rgba(255,255,255,.07); font-size:11px; color:#94a3b8; letter-spacing:.8px; }
 }
 </style>
 </head>
 <body>
 
 <div id="topbar">
-  <div id="topbar-row1">
-    <div style="display:flex;align-items:center;gap:8px;">
-      <div style="width:10px;height:10px;border-radius:50%;background:#38bdf8;flex-shrink:0;"></div>
-      <span style="font-size:13px;font-weight:900;color:#e0f2fe;letter-spacing:3px;text-transform:uppercase;">Tech Support</span>
-    </div>
-    <div id="topbar-date">
-      <div style="font-size:26px;font-weight:900;color:#fff;line-height:1;text-align:center;">${dayName}</div>
-      <div style="font-size:12px;color:#93c5fd;margin-top:2px;font-weight:600;letter-spacing:1px;text-align:center;">${dateStr}</div>
-    </div>
+  <div id="topbar-brand">
+    <div style="width:8px;height:8px;border-radius:50%;background:#38bdf8;flex-shrink:0;"></div>
+    <span style="font-size:11px;font-weight:900;color:#e0f2fe;letter-spacing:2px;text-transform:uppercase;">Tech Support</span>
+  </div>
+  <div id="topbar-date">
+    <div class="day" style="font-size:20px;font-weight:900;color:#fff;line-height:1;">${dayName}</div>
+    <div class="dt"  style="font-size:10px;color:#93c5fd;margin-top:1px;font-weight:600;letter-spacing:1px;">${dateStr}</div>
   </div>
   <div id="stats-row">
-    <div style="display:flex;flex-direction:column;align-items:center;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);border-radius:10px;padding:6px 12px;">
-      <span style="font-size:18px;font-weight:900;color:#4ade80;line-height:1;">${totalWorking}</span>
-      <span style="font-size:10px;font-weight:700;color:#4ade80;margin-top:2px;">Đi làm</span>
-    </div>
+    <div class="stat-chip"><span class="n" style="color:#4ade80;">${totalWorking}</span><span class="l" style="color:#4ade80;">Làm</span></div>
     ${statChipsHtml}
-    <div style="display:flex;flex-direction:column;align-items:center;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);border-radius:10px;padding:6px 12px;">
-      <span style="font-size:18px;font-weight:900;color:#fbbf24;line-height:1;">${totalAll}</span>
-      <span style="font-size:10px;font-weight:700;color:#fbbf24;margin-top:2px;">Tổng</span>
-    </div>
-    <button id="dlBtn" onclick="dlPng()">⬇ Tải PNG</button>
+    <div class="stat-chip"><span class="n" style="color:#fbbf24;">${totalAll}</span><span class="l" style="color:#fbbf24;">Tổng</span></div>
+    <button id="dlBtn" onclick="dlPng()">⬇ PNG</button>
     <span id="status"></span>
   </div>
 </div>
@@ -227,13 +279,13 @@ body::before {
   ${shiftCard("C2")}
   ${shiftCard("C3")}
   <div id="other-col">
-    <div style="font-size:13px;font-weight:900;color:#e2e8f0;letter-spacing:1px;text-transform:uppercase;margin-bottom:12px;">Trạng thái khác</div>
+    <div style="font-size:11px;font-weight:900;color:#e2e8f0;letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;">Trạng thái khác</div>
     ${otherHtml}
   </div>
 </div>
 
 <div id="footer">
-  C1: 7:00 AM – 3:00 PM &nbsp;·&nbsp; C2: 3:00 PM – 11:00 PM &nbsp;·&nbsp; C3: 9:00 AM – 4:00 PM &nbsp;·&nbsp; All times in <strong>CST (Central Standard Time, UTC−6)</strong> &nbsp;·&nbsp; TECH TEAM — Have a great day!
+  C1: 7:00 AM – 3:00 PM &nbsp;·&nbsp; C2: 3:00 PM – 11:00 PM &nbsp;·&nbsp; C3: 9:00 AM – 4:00 PM &nbsp;·&nbsp; All times CST (UTC−6) &nbsp;·&nbsp; TECH TEAM
 </div>
 
 <script>

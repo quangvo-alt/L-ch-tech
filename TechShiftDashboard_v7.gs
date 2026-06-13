@@ -277,8 +277,8 @@ body::before {
 .p-row { display:flex; align-items:center; gap:6px; padding:3px 0; border-bottom:1px solid #f1f5f9; }
 .p-row:last-child { border-bottom:none; }
 .p-av  { width:22px; height:22px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:8px; font-weight:900; flex-shrink:0; }
-.p-nm   { font-size:11px; font-weight:700; color:#0f172a; }
-.p-role  { font-size:9px; font-weight:600; margin-left:4px; color:#64748b; white-space:nowrap; }
+.p-nm   { font-size:13px; font-weight:800; color:#0f172a; }
+.p-role  { font-size:10px; font-weight:600; margin-left:4px; color:#64748b; white-space:nowrap; }
 .p-badge { padding:1px 6px; border-radius:4px; border-width:1px; border-style:solid; }
 .p-dp  { font-size:9px;  color:#94a3b8; font-weight:500; margin-left:3px; }
 
@@ -347,23 +347,24 @@ body::before {
   .card-hdr .shift-time{ font-size:12px; }
   .card-hdr .shift-tz  { font-size:10px; }
   .card-hdr .shift-cnt { font-size:13px; }
-  .p-row { gap:9px; padding:5px 0; }
-  .p-av  { width:28px; height:28px; font-size:10px; }
-  .p-nm   { font-size:14px; }
-  .p-role { font-size:11px; }
-  .p-dp  { font-size:11px; }
+  .p-row { gap:10px; padding:6px 0; }
+  .p-av  { width:31px; height:31px; font-size:11px; }
+  .p-nm   { font-size:16px; font-weight:800; }
+  .p-role { font-size:12px; }
+  .p-dp  { font-size:12px; }
+  .card-hdr .shift-sub { font-size:14px; }
   .oth-lbl  { font-size:12px; padding:4px 11px; }
   .oth-chip { font-size:13px; padding:5px 11px; border-radius:6px; }
   .oth-sec  { margin-bottom:14px; }
   #other-col > div:first-child { font-size:13px; margin-bottom:12px; }
   #footer { display:block; text-align:center; margin-top:12px; padding:12px 0; border-top:1px solid rgba(255,255,255,.1); font-size:15px; color:#cbd5e1; letter-spacing:1px; font-weight:600; }
   #footer strong { color:#93c5fd; font-weight:800; }
-  #quote-bar { margin:14px 12px 10px; padding:20px 34px; border-radius:16px; gap:18px; }
-  #quote-bar::before { height:4px; }
-  .qmark        { font-size:58px; }
-  #quote-inner  { gap:7px; }
-  #quote-text   { font-size:19px; line-height:1.5; }
-  #quote-author { font-size:13px; letter-spacing:1.5px; }
+  #quote-bar { margin:12px 12px 10px; padding:13px 28px; border-radius:14px; gap:14px; }
+  #quote-bar::before { height:3px; }
+  .qmark        { font-size:42px; }
+  #quote-inner  { gap:5px; }
+  #quote-text   { font-size:15px; line-height:1.45; }
+  #quote-author { font-size:11px; letter-spacing:1.5px; }
 }
 </style>
 </head>
@@ -420,8 +421,9 @@ function copyImg() {
   ready.then(function() {
     const W = document.body.scrollWidth;
     const H = document.body.scrollHeight;
-    // Scale động: nhắm chiều ngang ~3840px (4K), tối thiểu 2.5x cho nét
-    const scale = Math.max(2.5, Math.min(4, 3840 / W));
+    // Telegram nén ảnh paste về tối đa ~1280px cạnh dài. Render ~1920px (supersample 1.5x)
+    // để khi Telegram thu xuống vẫn sắc, rõ chữ — file nhẹ, mở nhanh trong tin nhắn.
+    const scale = Math.max(1.25, Math.min(2, 1920 / W));
     return html2canvas(document.body, {
       scale: scale,
       useCORS: true,

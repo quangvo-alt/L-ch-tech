@@ -358,8 +358,8 @@ body::before {
 
 <div id="topbar">
   <div id="topbar-brand">
-    <div style="width:8px;height:8px;border-radius:50%;background:#38bdf8;flex-shrink:0;"></div>
-    <span class="outfit" style="font-size:11px;font-weight:900;color:#e0f2fe;letter-spacing:2px;text-transform:uppercase;">Tech Support</span>
+    <div style="width:12px;height:12px;border-radius:50%;background:#22c55e;box-shadow:0 0 6px #22c55e;flex-shrink:0;"></div>
+    <span class="outfit" style="font-size:16px;font-weight:900;color:#e0f2fe;letter-spacing:3px;text-transform:uppercase;">Tech Support</span>
   </div>
   <div id="topbar-date">
     <div class="day outfit" style="font-size:20px;font-weight:900;color:#fff;line-height:1;">${dayName}</div>

@@ -13,7 +13,8 @@ function doGet() {
 
   const dateCell = sheet.getRange("I1").getValue();
   const tz       = ss.getSpreadsheetTimeZone();
-  const today    = dateCell ? new Date(dateCell) : new Date();
+  let today      = dateCell ? new Date(dateCell) : new Date();
+  if (isNaN(today.getTime())) today = new Date();  // I1 không phải ngày hợp lệ → dùng hôm nay
   const dateStr  = Utilities.formatDate(today, tz, "MMMM dd, yyyy");
   const dayName  = Utilities.formatDate(today, tz, "EEEE");
 
@@ -24,11 +25,6 @@ function doGet() {
   function vnToLocal(vnHour) {
     // VN = UTC+7, so UTC = VN - 7; local = UTC + localOffset
     return ((vnHour - 7 + localOffset) % 24 + 24) % 24;
-  }
-  function fmtHour(h) {
-    const period = h < 12 ? "AM" : "PM";
-    const h12    = h % 12 === 0 ? 12 : h % 12;
-    return h12 + ":00 " + period;
   }
 
   // VN fixed: C1 8PM→4AM, C2 4AM→12PM(noon), C3 10PM→5AM
@@ -343,7 +339,7 @@ body::before {
   #other-col { grid-column:auto; grid-row:auto; padding:14px 13px; }
   .card-hdr  { padding:10px 14px; }
   .card-hdr .shift-lbl { font-size:16px; }
-  .card-hdr .shift-sub { font-size:13px; }
+  .card-hdr .shift-sub { font-size:14px; }
   .card-hdr .shift-time{ font-size:12px; }
   .card-hdr .shift-tz  { font-size:10px; }
   .card-hdr .shift-cnt { font-size:13px; }
@@ -352,7 +348,6 @@ body::before {
   .p-nm   { font-size:16px; font-weight:800; }
   .p-role { font-size:12px; }
   .p-dp  { font-size:12px; }
-  .card-hdr .shift-sub { font-size:14px; }
   .oth-lbl  { font-size:12px; padding:4px 11px; }
   .oth-chip { font-size:13px; padding:5px 11px; border-radius:6px; }
   .oth-sec  { margin-bottom:14px; }
@@ -416,6 +411,15 @@ function copyImg() {
   const st  = document.getElementById('status');
   btn.disabled = true; btn.textContent = '⏳ Đang tạo...';
   st.textContent = '';
+
+  function reset() { btn.disabled = false; btn.textContent = '📋 Copy'; }
+  function flash(msg, ms) { st.textContent = msg; setTimeout(() => st.textContent = '', ms || 4000); }
+  function download(canvas) {
+    const a = document.createElement('a');
+    a.href = canvas.toDataURL('image/png');
+    a.download = 'tech-shift.png'; a.click();
+  }
+
   // Chờ font web load xong (tránh chữ bị mờ / fallback) rồi mới chụp
   const ready = document.fonts && document.fonts.ready ? document.fonts.ready : Promise.resolve();
   ready.then(function() {
@@ -435,21 +439,16 @@ function copyImg() {
     });
   }).then(canvas => {
     canvas.toBlob(blob => {
+      if (!blob) { reset(); flash('❌ Không tạo được ảnh, thử lại.'); return; }
+      const canCopy = navigator.clipboard && window.ClipboardItem;
+      if (!canCopy) { download(canvas); reset(); flash('⚠️ Trình duyệt không hỗ trợ copy, đã tải xuống.'); return; }
       navigator.clipboard.write([new ClipboardItem({'image/png': blob})])
-        .then(() => {
-          btn.disabled = false; btn.textContent = '📋 Copy';
-          st.textContent = '✅ Đã copy! Paste vào Telegram.';
-          setTimeout(() => st.textContent = '', 4000);
-        })
-        .catch(() => {
-          const a = document.createElement('a');
-          a.href = canvas.toDataURL('image/png');
-          a.download = 'tech-shift.png'; a.click();
-          btn.disabled = false; btn.textContent = '📋 Copy';
-          st.textContent = '⚠️ Clipboard bị chặn, đã tải xuống.';
-          setTimeout(() => st.textContent = '', 4000);
-        });
+        .then(() => { reset(); flash('✅ Đã copy! Paste vào Telegram.'); })
+        .catch(() => { download(canvas); reset(); flash('⚠️ Clipboard bị chặn, đã tải xuống.'); });
     }, 'image/png');
+  }).catch(err => {
+    reset();
+    flash('❌ Lỗi tạo ảnh: ' + (err && err.message ? err.message : err), 6000);
   });
 }
 <\/script>

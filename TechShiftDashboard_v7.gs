@@ -41,6 +41,43 @@ function doGet() {
   if (lastRow < 3) return HtmlService.createHtmlOutput("<p>Không có dữ liệu</p>");
   const raw = sheet.getRange(3, 7, lastRow - 2, 3).getValues();
 
+  // Daily motivational quote — changes every day
+  const quotes = [
+    { text: "The only way to do great work is to love what you do.", author: "Steve Jobs" },
+    { text: "Success is not final, failure is not fatal: it is the courage to continue that counts.", author: "Winston Churchill" },
+    { text: "Believe you can and you're halfway there.", author: "Theodore Roosevelt" },
+    { text: "It does not matter how slowly you go as long as you do not stop.", author: "Confucius" },
+    { text: "Hard work beats talent when talent doesn't work hard.", author: "Tim Notke" },
+    { text: "The secret of getting ahead is getting started.", author: "Mark Twain" },
+    { text: "Don't watch the clock; do what it does. Keep going.", author: "Sam Levenson" },
+    { text: "Great things never come from comfort zones.", author: "Unknown" },
+    { text: "Push yourself, because no one else is going to do it for you.", author: "Unknown" },
+    { text: "Dream it. Wish it. Do it.", author: "Unknown" },
+    { text: "Success doesn't just find you. You have to go out and get it.", author: "Unknown" },
+    { text: "The harder you work for something, the greater you'll feel when you achieve it.", author: "Unknown" },
+    { text: "Dream bigger. Do bigger.", author: "Unknown" },
+    { text: "Don't stop when you're tired. Stop when you're done.", author: "Unknown" },
+    { text: "Wake up with determination. Go to bed with satisfaction.", author: "Unknown" },
+    { text: "Do something today that your future self will thank you for.", author: "Sean Patrick Flanery" },
+    { text: "Little things make big days.", author: "Unknown" },
+    { text: "It's going to be hard, but hard does not mean impossible.", author: "Unknown" },
+    { text: "Don't wait for opportunity. Create it.", author: "Unknown" },
+    { text: "Sometimes we're tested not to show our weaknesses, but to discover our strengths.", author: "Unknown" },
+    { text: "The key to success is to focus on goals, not obstacles.", author: "Unknown" },
+    { text: "Enthusiasm is the electricity of life.", author: "Gordon Parks" },
+    { text: "If you want to achieve greatness, stop asking for permission.", author: "Unknown" },
+    { text: "Things work out best for those who make the best of how things work out.", author: "John Wooden" },
+    { text: "To live a creative life, we must lose our fear of being wrong.", author: "Joseph Chilton Pearce" },
+    { text: "If you are not willing to risk the usual, you will have to settle for the ordinary.", author: "Jim Rohn" },
+    { text: "Trust because you are willing to accept the risk, not because it's safe or certain.", author: "Unknown" },
+    { text: "Take up one idea. Make that one idea your life.", author: "Swami Vivekananda" },
+    { text: "All our dreams can come true if we have the courage to pursue them.", author: "Walt Disney" },
+    { text: "Good things come to people who wait, but better things come to those who go out and get them.", author: "Unknown" },
+    { text: "If you do what you always did, you will get what you always got.", author: "Albert Einstein" },
+  ];
+  const dayOfYear = Math.floor((today - new Date(today.getFullYear(), 0, 0)) / 86400000);
+  const quote     = quotes[dayOfYear % quotes.length];
+
   const shiftOrder = ["C1","C2","C3","ME","NP","HO","OFF"];
   const grouped = {};
   shiftOrder.forEach(s => grouped[s] = []);
@@ -54,12 +91,12 @@ function doGet() {
   });
 
   return HtmlService
-    .createHtmlOutput(buildHtml(grouped, shiftOrder, dateStr, dayName, shiftTimesRaw, tzLabel))
+    .createHtmlOutput(buildHtml(grouped, shiftOrder, dateStr, dayName, shiftTimesRaw, tzLabel, quote))
     .setTitle("Tech Shift " + dateStr)
     .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
 }
 
-function buildHtml(grouped, shiftOrder, dateStr, dayName, shiftTimesRaw, tzLabel) {
+function buildHtml(grouped, shiftOrder, dateStr, dayName, shiftTimesRaw, tzLabel, quote) {
 
   function fmtHour(h) {
     const period = h < 12 ? "AM" : "PM";
@@ -260,6 +297,18 @@ body::before {
 }
 #dlBtn:disabled { opacity:.4; cursor:default; }
 #status { display:none; }
+#quote-bar {
+  position:relative; z-index:1;
+  margin:6px 5px 4px;
+  padding:8px 14px;
+  background:linear-gradient(90deg,rgba(30,58,138,.6),rgba(15,32,87,.6));
+  border:1px solid rgba(99,179,237,.15);
+  border-radius:8px;
+  display:flex; align-items:center; gap:8px; flex-wrap:wrap;
+}
+#quote-icon   { font-size:14px; flex-shrink:0; }
+#quote-text   { font-size:11px; color:#cbd5e1; font-style:italic; flex:1; line-height:1.4; }
+#quote-author { font-size:10px; color:#60a5fa; font-weight:700; flex-shrink:0; white-space:nowrap; }
 
 /* ── DESKTOP (≥ 900px) ── */
 @media (min-width:900px) {
@@ -296,6 +345,9 @@ body::before {
   .oth-sec  { margin-bottom:14px; }
   #other-col > div:first-child { font-size:13px; margin-bottom:12px; }
   #footer { display:block; text-align:center; margin-top:10px; padding:8px 0; border-top:1px solid rgba(255,255,255,.07); font-size:11px; color:#94a3b8; letter-spacing:.8px; }
+  #quote-bar { margin:6px 12px 8px; padding:10px 18px; border-radius:10px; }
+  #quote-text   { font-size:12px; }
+  #quote-author { font-size:11px; }
 }
 </style>
 </head>
@@ -331,6 +383,11 @@ body::before {
 
 <div id="footer">
   Shift 1: ${shiftTimes.C1} &nbsp;·&nbsp; Shift 2: ${shiftTimes.C2} &nbsp;·&nbsp; Shift 3: ${shiftTimes.C3} &nbsp;·&nbsp; All times <strong>${tzLabel}</strong> &nbsp;·&nbsp; TECH TEAM
+</div>
+<div id="quote-bar">
+  <span id="quote-icon">💬</span>
+  <span id="quote-text">"${quote.text}"</span>
+  <span id="quote-author">— ${quote.author}</span>
 </div>
 
 <script>

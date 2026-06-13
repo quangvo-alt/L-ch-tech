@@ -14,8 +14,7 @@ function doGet() {
   const tz       = ss.getSpreadsheetTimeZone();
   const today    = dateCell ? new Date(dateCell) : new Date();
   const dateStr  = Utilities.formatDate(today, tz, "MMMM dd, yyyy");
-  const dayNames = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
-  const dayName  = dayNames[today.getDay()];
+  const dayName  = Utilities.formatDate(today, tz, "EEEE");
 
   const lastRow = sheet.getLastRow();
   if (lastRow < 3) return HtmlService.createHtmlOutput("<p>Không có dữ liệu</p>");

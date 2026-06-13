@@ -90,7 +90,7 @@ function buildHtml(grouped, shiftOrder, dateStr, dayName, shiftTimesRaw, tzLabel
   };
 
   function cleanName(raw) { return raw.replace(/\s*\([^)]*\)/g,"").trim(); }
-  function extractRole(raw) { const m = raw.match(/\(([^)]+)\)/); return m ? m[1].trim() : ""; }
+  function cleanRole(raw) { return (raw || "").trim().replace(/[,;.]+$/, "").trim(); }
   function initials(raw) {
     return cleanName(raw).split(/\s+/).slice(-2).map(w=>w[0].toUpperCase()).join("");
   }
@@ -106,9 +106,9 @@ function buildHtml(grouped, shiftOrder, dateStr, dayName, shiftTimesRaw, tzLabel
 
   // Person row inside shift card
   function pRow(p, m) {
-    const ini  = initials(p.name);
-    const name = cleanName(p.name);
-    const role = extractRole(p.name);
+    const ini      = initials(p.name);
+    const name     = cleanName(p.name);
+    const role     = cleanRole(p.dept);   // column H = Function/Role
     const roleHtml = role ? `<span class="p-role">${role}</span>` : "";
     return `<div class="p-row">
       <div class="p-av" style="background:${m.avBg};color:${m.avTxt};">${ini}</div>

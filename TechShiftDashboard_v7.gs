@@ -159,7 +159,7 @@ function buildHtml(grouped, shiftOrder, dateStr, dayName, shiftTimesRaw, tzLabel
     const people = grouped[s]||[];
     const m = meta[s];
     const rows = people.map(p=>pRow(p,m)).join("");
-    const id   = s === "C3" ? ' id="card-c3"' : '';
+    const id   = s === "C3" ? ' id="card-c3"' : (s === "C2" ? ' id="card-c2"' : '');
     return `<div${id} style="border-radius:10px;overflow:hidden;border:1px solid rgba(255,255,255,.08);display:flex;flex-direction:column;">
       <div class="card-hdr" style="background:linear-gradient(90deg,${m.grad});">
         <span class="shift-lbl outfit">${s}</span>
@@ -172,11 +172,10 @@ function buildHtml(grouped, shiftOrder, dateStr, dayName, shiftTimesRaw, tzLabel
   }
 
   // Name chip for "other" col
+  // Người nghỉ (ME/NP/HO/OFF): chỉ hiện tên, bỏ vai trò để tối ưu diện tích
   function chip(p, m) {
     const name = cleanName(p.name);
-    const role = cleanRole(p.dept);
-    const roleHtml = role ? ` <span style="font-size:9px;opacity:.7;">${role}</span>` : "";
-    return `<div class="oth-chip" style="background:${m.chipBg};color:${m.chipTxt};border-color:${m.chipBd};">${name}${roleHtml}</div>`;
+    return `<div class="oth-chip" style="background:${m.chipBg};color:${m.chipTxt};border-color:${m.chipBd};">${name}</div>`;
   }
 
   // Section inside "other" col
@@ -301,18 +300,26 @@ body::before {
 #dlBtn:disabled { opacity:.4; cursor:default; }
 #status { display:none; }
 #quote-bar {
-  position:relative; z-index:1;
-  margin:6px 5px 4px;
-  padding:8px 14px;
-  background:linear-gradient(90deg,rgba(30,58,138,.6),rgba(15,32,87,.6));
-  border:1px solid rgba(99,179,237,.15);
-  border-radius:8px;
-  display:flex; align-items:center; justify-content:center; gap:8px; flex-wrap:wrap;
+  position:relative; z-index:1; overflow:hidden;
+  margin:10px 5px 6px;
+  padding:14px 18px;
+  background:linear-gradient(135deg,rgba(30,58,138,.55),rgba(15,32,87,.6));
+  border:1px solid rgba(99,179,237,.35);
+  border-radius:12px;
+  box-shadow:inset 0 0 0 1px rgba(99,179,237,.08), 0 6px 22px rgba(0,0,0,.35), 0 0 26px rgba(59,130,246,.12);
+  display:flex; align-items:center; justify-content:center; gap:10px; flex-wrap:nowrap;
   text-align:center;
 }
-#quote-icon   { font-size:14px; flex-shrink:0; }
-#quote-text   { font-size:11px; color:#cbd5e1; font-style:italic; line-height:1.4; }
-#quote-author { font-size:10px; color:#60a5fa; font-weight:700; white-space:nowrap; }
+#quote-bar::before {
+  content:''; position:absolute; top:0; left:0; right:0; height:3px;
+  background:linear-gradient(90deg,transparent,#3b82f6,#60a5fa,#3b82f6,transparent);
+}
+.qmark        { font-family:'Outfit',serif; font-weight:900; color:rgba(96,165,250,.45); line-height:.8; flex-shrink:0; font-size:34px; }
+.qmark-l      { align-self:flex-start; }
+.qmark-r      { align-self:flex-end; }
+#quote-inner  { display:flex; flex-direction:column; align-items:center; gap:4px; }
+#quote-text   { font-size:13px; color:#e2e8f0; font-style:italic; line-height:1.45; font-weight:500; }
+#quote-author { font-size:11px; color:#60a5fa; font-weight:800; letter-spacing:1px; text-transform:uppercase; white-space:nowrap; }
 
 /* ── DESKTOP (≥ 900px) ── */
 @media (min-width:900px) {
@@ -332,6 +339,7 @@ body::before {
     gap:10px; padding:0 12px;
   }
   #card-c3   { grid-column:auto; grid-row:auto; }
+  #card-c2   { margin-left:16px; }
   #other-col { grid-column:auto; grid-row:auto; padding:14px 13px; }
   .card-hdr  { padding:10px 14px; }
   .card-hdr .shift-lbl { font-size:16px; }
@@ -348,10 +356,14 @@ body::before {
   .oth-chip { font-size:13px; padding:5px 11px; border-radius:6px; }
   .oth-sec  { margin-bottom:14px; }
   #other-col > div:first-child { font-size:13px; margin-bottom:12px; }
-  #footer { display:block; text-align:center; margin-top:10px; padding:8px 0; border-top:1px solid rgba(255,255,255,.07); font-size:11px; color:#94a3b8; letter-spacing:.8px; }
-  #quote-bar { margin:6px 12px 8px; padding:10px 18px; border-radius:10px; }
-  #quote-text   { font-size:12px; }
-  #quote-author { font-size:11px; }
+  #footer { display:block; text-align:center; margin-top:12px; padding:12px 0; border-top:1px solid rgba(255,255,255,.1); font-size:15px; color:#cbd5e1; letter-spacing:1px; font-weight:600; }
+  #footer strong { color:#93c5fd; font-weight:800; }
+  #quote-bar { margin:14px 12px 10px; padding:20px 34px; border-radius:16px; gap:18px; }
+  #quote-bar::before { height:4px; }
+  .qmark        { font-size:58px; }
+  #quote-inner  { gap:7px; }
+  #quote-text   { font-size:19px; line-height:1.5; }
+  #quote-author { font-size:13px; letter-spacing:1.5px; }
 }
 </style>
 </head>
@@ -377,8 +389,8 @@ body::before {
 
 <div id="main">
   ${shiftCard("C1")}
-  ${shiftCard("C2")}
   ${shiftCard("C3")}
+  ${shiftCard("C2")}
   <div id="other-col">
     <div style="font-size:11px;font-weight:900;color:#e2e8f0;letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;">Trạng thái khác</div>
     ${otherHtml}
@@ -389,9 +401,12 @@ body::before {
   Shift 1: ${shiftTimes.C1} &nbsp;·&nbsp; Shift 2: ${shiftTimes.C2} &nbsp;·&nbsp; Shift 3: ${shiftTimes.C3} &nbsp;·&nbsp; All times <strong>${tzLabel}</strong> &nbsp;·&nbsp; TECH TEAM
 </div>
 <div id="quote-bar">
-  <span id="quote-icon">💬</span>
-  <span id="quote-text">"${quote.text}"</span>
-  <span id="quote-author">— ${quote.author}</span>
+  <span class="qmark qmark-l">&ldquo;</span>
+  <div id="quote-inner">
+    <span id="quote-text">${quote.text}</span>
+    <span id="quote-author">— ${quote.author}</span>
+  </div>
+  <span class="qmark qmark-r">&rdquo;</span>
 </div>
 
 <script>
@@ -400,13 +415,22 @@ function copyImg() {
   const st  = document.getElementById('status');
   btn.disabled = true; btn.textContent = '⏳ Đang tạo...';
   st.textContent = '';
-  html2canvas(document.body, {
-    scale: 1.5,
-    useCORS: true,
-    backgroundColor: '#0B1426',
-    logging: false,
-    windowWidth: document.body.scrollWidth,
-    windowHeight: document.body.scrollHeight
+  // Chờ font web load xong (tránh chữ bị mờ / fallback) rồi mới chụp
+  const ready = document.fonts && document.fonts.ready ? document.fonts.ready : Promise.resolve();
+  ready.then(function() {
+    const W = document.body.scrollWidth;
+    const H = document.body.scrollHeight;
+    // Scale động: nhắm chiều ngang ~3840px (4K), tối thiểu 2.5x cho nét
+    const scale = Math.max(2.5, Math.min(4, 3840 / W));
+    return html2canvas(document.body, {
+      scale: scale,
+      useCORS: true,
+      backgroundColor: '#0B1426',
+      logging: false,
+      imageTimeout: 0,
+      windowWidth: W,
+      windowHeight: H
+    });
   }).then(canvas => {
     canvas.toBlob(blob => {
       navigator.clipboard.write([new ClipboardItem({'image/png': blob})])

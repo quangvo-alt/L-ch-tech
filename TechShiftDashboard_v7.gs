@@ -97,24 +97,24 @@ function doGet() {
   const shiftOrder = ["C1","C2","C3","ME","NP","HO","OFF"];
   const grouped = {};
   shiftOrder.forEach(s => grouped[s] = []);
-  const unknown = [];   // nhân sự có mã ca không hợp lệ → cảnh báo
 
   raw.forEach(row => {
     const name  = (row[0] || "").toString().trim();
     const dept  = (row[1] || "").toString().trim();
     const shift = (row[2] || "").toString().trim().toUpperCase();
     if (!name) return;
-    if (grouped[shift] !== undefined) grouped[shift].push({ name, dept });
-    else unknown.push({ name, shift });
+    if (grouped[shift] !== undefined)  grouped[shift].push({ name, dept });
+    else if (dept)                     grouped["OFF"].push({ name, dept });  // sai form nhưng có vai trò → mặc định OFF
+    // sai form + không có vai trò → bỏ qua (dòng rác: lời chào, chú thích...)
   });
 
   return HtmlService
-    .createHtmlOutput(buildHtml(grouped, shiftOrder, dateStr, dayName, shiftTimesRaw, tzLabel, quote, unknown))
+    .createHtmlOutput(buildHtml(grouped, shiftOrder, dateStr, dayName, shiftTimesRaw, tzLabel, quote))
     .setTitle("Tech Shift " + dateStr)
     .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
 }
 
-function buildHtml(grouped, shiftOrder, dateStr, dayName, shiftTimesRaw, tzLabel, quote, unknown) {
+function buildHtml(grouped, shiftOrder, dateStr, dayName, shiftTimesRaw, tzLabel, quote) {
 
   function fmtHour(h) {
     const period = h < 12 ? "AM" : "PM";
@@ -213,13 +213,6 @@ function buildHtml(grouped, shiftOrder, dateStr, dayName, shiftTimesRaw, tzLabel
   }
 
   const otherHtml = ["ME","NP","HO","OFF"].map(s=>otherSec(s)).join("");
-
-  // Cảnh báo: nhân sự có mã ca không hợp lệ (không lọt vào bảng nào)
-  const warnHtml = (unknown && unknown.length)
-    ? `<div id="warn-bar">⚠️ ${unknown.length} nhân sự có mã ca không hợp lệ (không hiển thị trong bảng): `
-      + unknown.map(u => `${esc(cleanName(u.name))} <span class="warn-code">${u.shift ? "&#39;" + esc(u.shift) + "&#39;" : "trống"}</span>`).join(', ')
-      + `</div>`
-    : '';
 
   return `<!DOCTYPE html>
 <html lang="vi">
@@ -325,13 +318,6 @@ body::before {
 }
 #dlBtn:disabled { opacity:.4; cursor:default; }
 #status { display:none; }
-#warn-bar {
-  position:relative; z-index:1;
-  margin:8px 5px 0; padding:8px 12px;
-  background:rgba(180,83,9,.18); border:1px solid rgba(251,191,36,.5);
-  border-radius:8px; color:#fde68a; font-size:11px; font-weight:600; line-height:1.5;
-}
-.warn-code { color:#fca5a5; font-weight:800; }
 #quote-bar {
   position:relative; z-index:1; overflow:hidden;
   margin:10px 5px 6px;
@@ -397,7 +383,6 @@ body::before {
   #quote-inner  { gap:5px; }
   #quote-text   { font-size:15px; line-height:1.45; }
   #quote-author { font-size:11px; letter-spacing:1.5px; }
-  #warn-bar { margin:10px 12px 0; font-size:13px; }
 }
 </style>
 </head>
@@ -431,7 +416,6 @@ body::before {
   </div>
 </div>
 
-${warnHtml}
 <div id="footer">
   Shift 1: ${shiftTimes.C1} &nbsp;·&nbsp; Shift 2: ${shiftTimes.C2} &nbsp;·&nbsp; Shift 3: ${shiftTimes.C3} &nbsp;·&nbsp; All times <strong>${tzLabel}</strong> &nbsp;·&nbsp; TECH TEAM
 </div>

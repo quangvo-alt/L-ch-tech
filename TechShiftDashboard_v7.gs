@@ -6,6 +6,24 @@
 //  Deploy: Execute as Me · Who has access: Anyone
 // ============================================================
 
+// Offset & nhãn giờ US Central, tự xử lý DST theo ngày.
+// DST: từ Chủ nhật thứ 2 của tháng 3 đến Chủ nhật đầu tiên của tháng 11.
+function centralOffsetLabel(date, tz) {
+  const y = parseInt(Utilities.formatDate(date, tz, "yyyy"), 10);
+  const m = parseInt(Utilities.formatDate(date, tz, "M"), 10);   // 1-12
+  const d = parseInt(Utilities.formatDate(date, tz, "d"), 10);
+  function nthSunday(year, month1, n) {     // ngày-trong-tháng của Chủ nhật thứ n
+    const dow = new Date(Date.UTC(year, month1 - 1, 1)).getUTCDay();  // 0 = Chủ nhật
+    return 1 + ((7 - dow) % 7) + (n - 1) * 7;
+  }
+  let dst;
+  if (m < 3 || m > 11)      dst = false;
+  else if (m > 3 && m < 11) dst = true;
+  else if (m === 3)         dst = d >= nthSunday(y, 3, 2);
+  else /* m === 11 */       dst = d <  nthSunday(y, 11, 1);
+  return dst ? { offset: -5, label: "CDT (UTC−5)" } : { offset: -6, label: "CST (UTC−6)" };
+}
+
 function doGet() {
   const ss    = SpreadsheetApp.getActiveSpreadsheet();
   const sheet = ss.getSheetByName("Filter");
@@ -18,9 +36,10 @@ function doGet() {
   const dateStr  = Utilities.formatDate(today, tz, "MMMM dd, yyyy");
   const dayName  = Utilities.formatDate(today, tz, "EEEE");
 
-  // Fixed: CDT (Central Daylight Time) UTC-5
-  const localOffset = -5;
-  const tzLabel     = "CDT (UTC−5)";
+  // US Central tự động theo DST: hè CDT (UTC−5), đông CST (UTC−6)
+  const ct          = centralOffsetLabel(today, tz);
+  const localOffset = ct.offset;
+  const tzLabel     = ct.label;
 
   function vnToLocal(vnHour) {
     // VN = UTC+7, so UTC = VN - 7; local = UTC + localOffset
@@ -78,6 +97,7 @@ function doGet() {
   const shiftOrder = ["C1","C2","C3","ME","NP","HO","OFF"];
   const grouped = {};
   shiftOrder.forEach(s => grouped[s] = []);
+  const unknown = [];   // nhân sự có mã ca không hợp lệ → cảnh báo
 
   raw.forEach(row => {
     const name  = (row[0] || "").toString().trim();
@@ -85,15 +105,16 @@ function doGet() {
     const shift = (row[2] || "").toString().trim().toUpperCase();
     if (!name) return;
     if (grouped[shift] !== undefined) grouped[shift].push({ name, dept });
+    else unknown.push({ name, shift });
   });
 
   return HtmlService
-    .createHtmlOutput(buildHtml(grouped, shiftOrder, dateStr, dayName, shiftTimesRaw, tzLabel, quote))
+    .createHtmlOutput(buildHtml(grouped, shiftOrder, dateStr, dayName, shiftTimesRaw, tzLabel, quote, unknown))
     .setTitle("Tech Shift " + dateStr)
     .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
 }
 
-function buildHtml(grouped, shiftOrder, dateStr, dayName, shiftTimesRaw, tzLabel, quote) {
+function buildHtml(grouped, shiftOrder, dateStr, dayName, shiftTimesRaw, tzLabel, quote, unknown) {
 
   function fmtHour(h) {
     const period = h < 12 ? "AM" : "PM";
@@ -190,6 +211,13 @@ function buildHtml(grouped, shiftOrder, dateStr, dayName, shiftTimesRaw, tzLabel
   }
 
   const otherHtml = ["ME","NP","HO","OFF"].map(s=>otherSec(s)).join("");
+
+  // Cảnh báo: nhân sự có mã ca không hợp lệ (không lọt vào bảng nào)
+  const warnHtml = (unknown && unknown.length)
+    ? `<div id="warn-bar">⚠️ ${unknown.length} nhân sự có mã ca không hợp lệ (không hiển thị trong bảng): `
+      + unknown.map(u => `${cleanName(u.name)} <span class="warn-code">${u.shift ? "&#39;" + u.shift + "&#39;" : "trống"}</span>`).join(', ')
+      + `</div>`
+    : '';
 
   return `<!DOCTYPE html>
 <html lang="vi">
@@ -295,6 +323,13 @@ body::before {
 }
 #dlBtn:disabled { opacity:.4; cursor:default; }
 #status { display:none; }
+#warn-bar {
+  position:relative; z-index:1;
+  margin:8px 5px 0; padding:8px 12px;
+  background:rgba(180,83,9,.18); border:1px solid rgba(251,191,36,.5);
+  border-radius:8px; color:#fde68a; font-size:11px; font-weight:600; line-height:1.5;
+}
+.warn-code { color:#fca5a5; font-weight:800; }
 #quote-bar {
   position:relative; z-index:1; overflow:hidden;
   margin:10px 5px 6px;
@@ -360,6 +395,7 @@ body::before {
   #quote-inner  { gap:5px; }
   #quote-text   { font-size:15px; line-height:1.45; }
   #quote-author { font-size:11px; letter-spacing:1.5px; }
+  #warn-bar { margin:10px 12px 0; font-size:13px; }
 }
 </style>
 </head>
@@ -393,6 +429,7 @@ body::before {
   </div>
 </div>
 
+${warnHtml}
 <div id="footer">
   Shift 1: ${shiftTimes.C1} &nbsp;·&nbsp; Shift 2: ${shiftTimes.C2} &nbsp;·&nbsp; Shift 3: ${shiftTimes.C3} &nbsp;·&nbsp; All times <strong>${tzLabel}</strong> &nbsp;·&nbsp; TECH TEAM
 </div>

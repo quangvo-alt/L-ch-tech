@@ -51,6 +51,7 @@ function buildHtml(grouped, shiftOrder, dateStr, dayName) {
   };
 
   function cleanName(raw) { return raw.replace(/\s*\([^)]*\)/g,"").trim(); }
+  function extractRole(raw) { const m = raw.match(/\(([^)]+)\)/); return m ? m[1].trim() : ""; }
   function initials(raw) {
     return cleanName(raw).split(/\s+/).slice(-2).map(w=>w[0].toUpperCase()).join("");
   }
@@ -68,11 +69,11 @@ function buildHtml(grouped, shiftOrder, dateStr, dayName) {
   function pRow(p, m) {
     const ini  = initials(p.name);
     const name = cleanName(p.name);
-    const dept = p.dept && p.dept.toUpperCase() !== "TECH"
-      ? `<span class="p-dp">${p.dept}</span>` : "";
+    const role = extractRole(p.name);
+    const roleHtml = role ? `<span class="p-role">${role}</span>` : "";
     return `<div class="p-row">
       <div class="p-av" style="background:${m.avBg};color:${m.avTxt};">${ini}</div>
-      <span class="p-nm">${name}</span>${dept}
+      <span class="p-nm">${name}</span>${roleHtml}
     </div>`;
   }
 
@@ -197,7 +198,8 @@ body::before {
 .p-row { display:flex; align-items:center; gap:6px; padding:3px 0; border-bottom:1px solid #f1f5f9; }
 .p-row:last-child { border-bottom:none; }
 .p-av  { width:22px; height:22px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:8px; font-weight:900; flex-shrink:0; }
-.p-nm  { font-size:11px; font-weight:700; color:#0f172a; }
+.p-nm   { font-size:11px; font-weight:700; color:#0f172a; }
+.p-role { font-size:9px; color:#64748b; font-weight:600; margin-left:4px; font-style:italic; }
 .p-dp  { font-size:9px;  color:#94a3b8; font-weight:500; margin-left:3px; }
 
 /* other section compact */
@@ -244,7 +246,8 @@ body::before {
   .card-hdr .shift-cnt { font-size:13px; }
   .p-row { gap:9px; padding:5px 0; }
   .p-av  { width:28px; height:28px; font-size:10px; }
-  .p-nm  { font-size:14px; }
+  .p-nm   { font-size:14px; }
+  .p-role { font-size:11px; }
   .p-dp  { font-size:11px; }
   .oth-lbl  { font-size:12px; padding:4px 11px; }
   .oth-chip { font-size:13px; padding:5px 11px; border-radius:6px; }

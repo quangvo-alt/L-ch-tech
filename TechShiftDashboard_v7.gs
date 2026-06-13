@@ -139,6 +139,7 @@ function buildHtml(grouped, shiftOrder, dateStr, dayName, shiftTimesRaw, tzLabel
 
   function cleanName(raw) { return raw.replace(/\s*\([^)]*\)/g,"").trim(); }
   function cleanRole(raw) { return (raw || "").trim().replace(/[,;.]+$/, "").trim(); }
+  function esc(s) { return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
   function roleStyle(role) {
     const r = role.toLowerCase();
     if (r.includes("mgr"))                                    return "background:#fef3c7;color:#92400e;border:1px solid #fcd34d;font-weight:800;";  // Amber — Manager
@@ -160,10 +161,11 @@ function buildHtml(grouped, shiftOrder, dateStr, dayName, shiftTimesRaw, tzLabel
 
   // Person row inside shift card
   function pRow(p, m) {
-    const ini      = initials(p.name);
-    const name     = cleanName(p.name);
-    const role     = cleanRole(p.dept);   // column H = Function/Role
-    const rs       = roleStyle(role);
+    const ini      = esc(initials(p.name));
+    const name     = esc(cleanName(p.name));
+    const rawRole  = cleanRole(p.dept);   // column H = Function/Role
+    const rs       = roleStyle(rawRole);
+    const role     = esc(rawRole);
     const roleHtml = role ? `<span class="${rs ? 'p-role p-badge' : 'p-role'}" style="${rs}">${role}</span>` : "";
     return `<div class="p-row">
       <div class="p-av" style="background:${m.avBg};color:${m.avTxt};">${ini}</div>
@@ -191,7 +193,7 @@ function buildHtml(grouped, shiftOrder, dateStr, dayName, shiftTimesRaw, tzLabel
   // Name chip for "other" col
   // Người nghỉ (ME/NP/HO/OFF): chỉ hiện tên, bỏ vai trò để tối ưu diện tích
   function chip(p, m) {
-    const name = cleanName(p.name);
+    const name = esc(cleanName(p.name));
     return `<div class="oth-chip" style="background:${m.chipBg};color:${m.chipTxt};border-color:${m.chipBd};">${name}</div>`;
   }
 
@@ -215,7 +217,7 @@ function buildHtml(grouped, shiftOrder, dateStr, dayName, shiftTimesRaw, tzLabel
   // Cảnh báo: nhân sự có mã ca không hợp lệ (không lọt vào bảng nào)
   const warnHtml = (unknown && unknown.length)
     ? `<div id="warn-bar">⚠️ ${unknown.length} nhân sự có mã ca không hợp lệ (không hiển thị trong bảng): `
-      + unknown.map(u => `${cleanName(u.name)} <span class="warn-code">${u.shift ? "&#39;" + u.shift + "&#39;" : "trống"}</span>`).join(', ')
+      + unknown.map(u => `${esc(cleanName(u.name))} <span class="warn-code">${u.shift ? "&#39;" + esc(u.shift) + "&#39;" : "trống"}</span>`).join(', ')
       + `</div>`
     : '';
 
@@ -436,8 +438,8 @@ ${warnHtml}
 <div id="quote-bar">
   <span class="qmark qmark-l">&ldquo;</span>
   <div id="quote-inner">
-    <span id="quote-text">${quote.text}</span>
-    <span id="quote-author">— ${quote.author}</span>
+    <span id="quote-text">${esc(quote.text)}</span>
+    <span id="quote-author">— ${esc(quote.author)}</span>
   </div>
   <span class="qmark qmark-r">&rdquo;</span>
 </div>

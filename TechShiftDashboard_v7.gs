@@ -182,24 +182,28 @@ function buildHtml(grouped, dateStr, dayName, shiftTimesRaw, tzLabel, quote) {
     return `<div class="stat-chip"><span class="n outfit" style="color:${m.statClr};">${n}</span><span class="l" style="color:${m.statClr};">${s}</span></div>`;
   }).join("");
 
-  // Person row inside shift card — WORK = trắng; OFF/ME/NP/HO = tô màu + pill trạng thái
+  // Person row inside shift card
+  // WORK  = sáng, chấm xanh hoạt động
+  // LEAVE = mờ hơn (chỉ pill có màu), không tô nền
   function personRow(p, m) {
-    const ini      = esc(initials(p.name));
-    const name     = esc(cleanName(p.name));
-    const rawRole  = cleanRole(p.role);   // cột I = vai trò
-    const rs       = roleStyle(rawRole);
-    const role     = esc(rawRole);
-    const roleHtml = role ? `<span class="${rs ? 'p-role p-badge' : 'p-role'}" style="${rs}">${role}</span>` : "";
+    const ini     = esc(initials(p.name));
+    const name    = esc(cleanName(p.name));
+    const rawRole = cleanRole(p.role);
+    const role    = esc(rawRole);
     if (p.st === "WORK") {
+      const rs       = roleStyle(rawRole);
+      const roleHtml = role ? `<span class="${rs ? 'p-role p-badge' : 'p-role'}" style="${rs}">${role}</span>` : "";
       return `<div class="p-row">
+        <span class="active-dot"></span>
         <div class="p-av" style="background:${m.avBg};color:${m.avTxt};">${ini}</div>
         <span class="p-nm">${name}</span>${roleHtml}
       </div>`;
     }
-    const lm = LEAVE_META[p.st] || LEAVE_META.OFF;
-    return `<div class="p-row" style="background:${lm.tint};">
-      <div class="p-av" style="background:${lm.avBg};color:${lm.avTxt};">${ini}</div>
-      <span class="p-nm">${name}</span>${roleHtml}
+    const lm       = LEAVE_META[p.st] || LEAVE_META.OFF;
+    const roleHtml = role ? `<span class="p-role p-role-dim">${role}</span>` : "";
+    return `<div class="p-row p-row-leave">
+      <div class="p-av p-av-dim" style="background:${lm.avBg};color:${lm.avTxt};">${ini}</div>
+      <span class="p-nm p-nm-dim">${name}</span>${roleHtml}
       <span class="leave-pill" style="background:${lm.pillBg};color:${lm.pillTxt};">${p.st}</span>
     </div>`;
   }
@@ -299,6 +303,13 @@ body::before {
 .p-badge { padding:1px 6px; border-radius:4px; border-width:1px; border-style:solid; }
 .p-dp  { font-size:9px;  color:#94a3b8; font-weight:500; margin-left:3px; }
 .leave-pill { margin-left:auto; flex-shrink:0; font-size:9px; font-weight:800; padding:1px 7px; border-radius:999px; letter-spacing:.5px; }
+/* active dot — người đang làm việc */
+.active-dot { width:7px; height:7px; border-radius:50%; background:#22c55e; box-shadow:0 0 5px #22c55e; flex-shrink:0; }
+/* leave row — mờ hơn, không tô nền */
+.p-row-leave { border-bottom-color:#e2e8f0; }
+.p-av-dim    { opacity:.5; }
+.p-nm-dim    { color:#94a3b8 !important; font-weight:600; }
+.p-role-dim  { font-size:10px; font-weight:500; margin-left:4px; color:#b0bec5; white-space:nowrap; }
 
 #footer { display:none; }
 
@@ -362,6 +373,8 @@ body::before {
   .p-role { font-size:12px; }
   .p-dp  { font-size:12px; }
   .leave-pill { font-size:11px; padding:2px 9px; }
+  .active-dot { width:8px; height:8px; }
+  .p-role-dim { font-size:12px; }
   #footer { display:block; text-align:center; margin-top:12px; padding:12px 0; border-top:1px solid rgba(255,255,255,.1); font-size:15px; color:#cbd5e1; letter-spacing:1px; font-weight:600; }
   #footer strong { color:#93c5fd; font-weight:800; }
   #quote-bar { margin:12px 12px 10px; padding:13px 28px; border-radius:14px; gap:14px; }

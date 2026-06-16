@@ -1,6 +1,6 @@
 // ============================================================
 //  TECH SHIFT DASHBOARD v7
-//  Tab: "Filter" | B=Tên · C=Vai trò · D=Trạng thái hôm nay · E=Ca cố định
+//  Tab: "Filter" | B=Tên · C=Vai trò · D=Trạng thái hôm nay (C1/C2/C3/OFF/ME/NP/HO)
 //  Shift: C1 C2 C3 ME NP HO OFF · I1 = ngày (=TODAY())
 //  Deploy: Execute as Me · Who has access: Anyone
 // ============================================================
@@ -54,7 +54,7 @@ function doGet() {
 
   const lastRow = sheet.getLastRow();
   if (lastRow < 3) return HtmlService.createHtmlOutput("<p>Không có dữ liệu</p>");
-  const raw = sheet.getRange(3, 2, lastRow - 2, 4).getValues();  // cột B..E
+  const raw = sheet.getRange(3, 2, lastRow - 2, 3).getValues();  // cột B..D
 
   // Daily motivational quote — changes every day
   const quotes = [
@@ -93,25 +93,23 @@ function doGet() {
   const dayOfYear = parseInt(Utilities.formatDate(today, tz, "D"), 10);
   const quote     = quotes[dayOfYear % quotes.length];
 
-  // Cột: B = tên | C = vai trò | D = trạng thái hôm nay | E = ca cố định
+  // Cột: B = tên | C = vai trò | D = trạng thái hôm nay
   const WORK  = { C1:1, C2:1, C3:1 };
   const LEAVE = { OFF:1, ME:1, NP:1, HO:1 };
-  const grouped = { C1:[], C2:[], C3:[] };
+  const grouped = { C1:[], C2:[], C3:[], OTHER:[] };
   const norm = v => (v == null ? "" : v).toString().trim().toUpperCase();
 
   raw.forEach(row => {
     const name   = (row[0] || "").toString().trim();   // B = tên
     const role   = (row[1] || "").toString().trim();   // C = vai trò
     const status = norm(row[2]);                        // D = trạng thái hôm nay
-    const home   = norm(row[3]);                        // E = ca cố định
     if (!name) return;
     if (/[0-9:\/]/.test(name)) return;                 // dòng rác (legend/giờ giấc)
-    if (WORK[status]) {                                // đi làm → card theo ca hôm nay (J)
+    if (WORK[status]) {
       grouped[status].push({ name, role, st: "WORK" });
-    } else {                                           // OFF/ME/NP/HO → card theo ca cố định (E)
-      if (!WORK[home]) return;                         // không rõ ca cố định → bỏ qua
-      const st = LEAVE[status] ? status : (role ? "OFF" : null);  // J lạ: có vai trò → OFF, không → bỏ
-      if (st) grouped[home].push({ name, role, st });
+    } else {
+      const st = LEAVE[status] ? status : (role ? "OFF" : null);
+      if (st) grouped.OTHER.push({ name, role, st });
     }
   });
 
@@ -165,12 +163,9 @@ function buildHtml(grouped, dateStr, dayName, shiftTimesRaw, tzLabel, quote) {
     return cleanName(raw).split(/\s+/).filter(w=>w.length>0).slice(-2).map(w=>w[0].toUpperCase()).join("") || "?";
   }
 
-  const workCount  = { C1:0, C2:0, C3:0 };
+  const workCount  = { C1:(grouped.C1||[]).length, C2:(grouped.C2||[]).length, C3:(grouped.C3||[]).length };
   const leaveCount = { ME:0, NP:0, HO:0, OFF:0 };
-  ["C1","C2","C3"].forEach(s => (grouped[s]||[]).forEach(p => {
-    if (p.st === "WORK") workCount[s]++;
-    else if (leaveCount[p.st] !== undefined) leaveCount[p.st]++;
-  }));
+  (grouped.OTHER||[]).forEach(p => { if (leaveCount[p.st] !== undefined) leaveCount[p.st]++; });
   const totalWorking = workCount.C1 + workCount.C2 + workCount.C3;
   const totalAll     = totalWorking + leaveCount.ME + leaveCount.NP + leaveCount.HO + leaveCount.OFF;
   const statCount    = Object.assign({}, workCount, leaveCount);
@@ -211,24 +206,37 @@ function buildHtml(grouped, dateStr, dayName, shiftTimesRaw, tzLabel, quote) {
     </div>`;
   }
 
-  // Shift card C1/C2/C3 — glass card; WORK = mini-cards sáng; LEAVE = dim rows ở dưới
+  // Shift card C1/C2/C3 — chỉ người đi làm
   function shiftCard(s) {
     const people = grouped[s] || [];
-    const work   = people.filter(p => p.st === "WORK");
-    const leave  = people.filter(p => p.st !== "WORK");
     const m = meta[s];
     const id = s === "C3" ? ' id="card-c3"' : (s === "C2" ? ' id="card-c2"' : '');
-    const workHtml  = work.map(p => personCard(p, m)).join("") ||
+    const workHtml = people.map(p => personCard(p, m)).join("") ||
       '<span style="font-size:11px;color:rgba(255,255,255,.3);padding:4px 0;display:block;">—</span>';
-    const leaveHtml = leave.map(p => leaveCard(p)).join("");
     return `<div class="shift-card"${id}>
       <div class="card-hdr" style="background:linear-gradient(135deg,${m.grad});">
         <span class="shift-lbl outfit">${s}</span>
         <span class="shift-sub">${m.label}</span>
         <span class="shift-time">${m.time} <span class="shift-tz">${tzLabel}</span></span>
-        <span class="shift-cnt outfit">${work.length}</span>
+        <span class="shift-cnt outfit">${people.length}</span>
       </div>
-      <div class="card-body">${workHtml}${leaveHtml}</div>
+      <div class="card-body">${workHtml}</div>
+    </div>`;
+  }
+
+  // Cột Nghỉ — tất cả OFF/ME/NP/HO, nằm ngoài cùng bên phải
+  function otherCol() {
+    const people = grouped.OTHER || [];
+    if (!people.length) return '';
+    const rows = people.map(p => leaveCard(p)).join("");
+    const total = people.length;
+    return `<div class="shift-card" id="card-other">
+      <div class="card-hdr" style="background:linear-gradient(135deg,#1e293b,#334155);">
+        <span class="shift-lbl outfit" style="font-size:13px;letter-spacing:1px;">OFF</span>
+        <span class="shift-sub">Vắng mặt</span>
+        <span class="shift-cnt outfit">${total}</span>
+      </div>
+      <div class="card-body">${rows}</div>
     </div>`;
   }
 
@@ -394,6 +402,7 @@ body::before {
     grid-template-columns:1fr 1fr 1fr;
     gap:10px; padding:0 12px;
   }
+  #main.has-other { grid-template-columns:1fr 1fr 1fr 260px; }
   #card-c2   { margin-left:16px; }
   .shift-card { border-radius:16px; }
   .card-hdr   { padding:12px 16px; }
@@ -441,10 +450,11 @@ body::before {
   </div>
 </div>
 
-<div id="main">
+<div id="main"${(grouped.OTHER||[]).length ? ' class="has-other"' : ''}>
   ${shiftCard("C1")}
   ${shiftCard("C3")}
   ${shiftCard("C2")}
+  ${otherCol()}
 </div>
 
 <div id="footer">

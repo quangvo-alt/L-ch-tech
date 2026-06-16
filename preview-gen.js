@@ -42,19 +42,21 @@ const grouped = {
     { name:"Nguyen Van An",    role:"Supervisor", st:"WORK" },
     { name:"Tran Thi Bich",    role:"Tech",       st:"WORK" },
     { name:"Le Van Cuong",     role:"Tech",       st:"WORK" },
-    { name:"Pham Thi Dung",    role:"Tech",       st:"OFF"  },
-    { name:"Hoang Van Em",     role:"Tech",       st:"ME"   },
   ],
   C2: [
     { name:"Vo Thi Phuong",    role:"Manager",    st:"WORK" },
     { name:"Nguyen Minh Quan", role:"Tech",       st:"WORK" },
-    { name:"Tran Van Son",     role:"Tech",       st:"NP"   },
-    { name:"Le Thi Thu",       role:"Tech",       st:"HO"   },
   ],
   C3: [
     { name:"Do Van Uyen",      role:"Tech",       st:"WORK" },
     { name:"Bui Thi Viet",     role:"Tech",       st:"WORK" },
     { name:"Cao Minh Xuan",    role:"Supervisor", st:"WORK" },
+  ],
+  OTHER: [
+    { name:"Pham Thi Dung",    role:"Tech",       st:"OFF"  },
+    { name:"Hoang Van Em",     role:"Tech",       st:"ME"   },
+    { name:"Tran Van Son",     role:"Tech",       st:"NP"   },
+    { name:"Le Thi Thu",       role:"Tech",       st:"HO"   },
     { name:"Dinh Van Yen",     role:"Tech",       st:"OFF"  },
   ],
 };

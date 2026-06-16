@@ -403,10 +403,10 @@ body::before {
   .card-hdr .shift-tz  { font-size:10px; }
   .card-hdr .shift-cnt { font-size:14px; padding:3px 11px; }
   .card-body  { padding:10px 12px 12px; gap:6px; }
-  .p-card { padding:7px 12px; border-radius:10px; gap:10px; }
-  .p-av  { width:32px; height:32px; font-size:11px; }
-  .p-nm  { font-size:15px; font-weight:800; }
-  .p-role{ font-size:12px; }
+  .p-card { padding:8px 14px; border-radius:10px; gap:10px; }
+  .p-av  { width:36px; height:36px; font-size:12px; }
+  .p-nm  { font-size:18px; font-weight:800; }
+  .p-role{ font-size:13px; }
   .active-dot { width:8px; height:8px; }
   .leave-pill { font-size:11px; padding:2px 9px; }
   .p-role-dim { font-size:12px; }

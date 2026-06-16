@@ -182,48 +182,46 @@ function buildHtml(grouped, dateStr, dayName, shiftTimesRaw, tzLabel, quote) {
     return `<div class="stat-chip"><span class="n outfit" style="color:${m.statClr};">${n}</span><span class="l" style="color:${m.statClr};">${s}</span></div>`;
   }).join("");
 
-  // Person row inside shift card
-  // WORK  = sáng, chấm xanh hoạt động
-  // LEAVE = mờ hơn (chỉ pill có màu), không tô nền
-  function personRow(p, m) {
-    const ini     = esc(initials(p.name));
-    const name    = esc(cleanName(p.name));
-    const rawRole = cleanRole(p.role);
-    const role    = esc(rawRole);
-    if (p.st === "WORK") {
-      const rs       = roleStyle(rawRole);
-      const roleHtml = role ? `<span class="${rs ? 'p-role p-badge' : 'p-role'}" style="${rs}">${role}</span>` : "";
-      return `<div class="p-row">
-        <span class="active-dot"></span>
-        <div class="p-av" style="background:${m.avBg};color:${m.avTxt};">${ini}</div>
-        <span class="p-nm">${name}</span>${roleHtml}
-      </div>`;
-    }
-    const lm       = LEAVE_META[p.st] || LEAVE_META.OFF;
-    const roleHtml = role ? `<span class="p-role p-role-dim">${role}</span>` : "";
-    return `<div class="p-row p-row-leave">
-      <div class="p-av p-av-dim" style="background:${lm.avBg};color:${lm.avTxt};">${ini}</div>
-      <span class="p-nm p-nm-dim">${name}</span>${roleHtml}
-      <span class="leave-pill" style="background:${lm.pillBg};color:${lm.pillTxt};">${p.st}</span>
+  // Person mini-card (WORK only — leave rendered as compact tags in shiftCard)
+  function personCard(p, m) {
+    const ini      = esc(initials(p.name));
+    const name     = esc(cleanName(p.name));
+    const rawRole  = cleanRole(p.role);
+    const rs       = roleStyle(rawRole);
+    const role     = esc(rawRole);
+    const roleHtml = role ? `<span class="${rs ? 'p-role p-badge' : 'p-role'}" style="${rs}">${role}</span>` : "";
+    return `<div class="p-card">
+      <span class="active-dot"></span>
+      <div class="p-av" style="background:${m.avBg};color:${m.avTxt};">${ini}</div>
+      <span class="p-nm">${name}</span>${roleHtml}
     </div>`;
   }
 
-  // Shift card C1/C2/C3 — đi làm trước, nghỉ (OFF/ME/NP/HO) sau; badge = số người đi làm
+  // Shift card C1/C2/C3 — glass card; WORK = mini-cards; LEAVE = compact tags ở dưới
   function shiftCard(s) {
     const people = grouped[s] || [];
     const work   = people.filter(p => p.st === "WORK");
     const leave  = people.filter(p => p.st !== "WORK");
     const m = meta[s];
-    const rows = work.concat(leave).map(p => personRow(p, m)).join("");
-    const id   = s === "C3" ? ' id="card-c3"' : (s === "C2" ? ' id="card-c2"' : '');
-    return `<div${id} style="border-radius:10px;overflow:hidden;border:1px solid rgba(255,255,255,.08);display:flex;flex-direction:column;">
-      <div class="card-hdr" style="background:linear-gradient(90deg,${m.grad});">
+    const id = s === "C3" ? ' id="card-c3"' : (s === "C2" ? ' id="card-c2"' : '');
+    const workHtml = work.map(p => personCard(p, m)).join("") ||
+      '<span style="font-size:11px;color:rgba(255,255,255,.3);padding:4px 0;display:block;">—</span>';
+    const leaveHtml = leave.length ? `<div class="leave-tags-row">${
+      leave.map(p => {
+        const lm = LEAVE_META[p.st] || LEAVE_META.OFF;
+        return `<span class="leave-tag" style="background:${lm.pillBg}22;color:${lm.pillTxt};border:1px solid ${lm.pillBg}88;">` +
+          `<span class="leave-tag-lbl" style="background:${lm.pillBg};color:${lm.pillTxt};">${p.st}</span>` +
+          `${esc(cleanName(p.name))}</span>`;
+      }).join("")
+    }</div>` : "";
+    return `<div class="shift-card"${id}>
+      <div class="card-hdr" style="background:linear-gradient(135deg,${m.grad});">
         <span class="shift-lbl outfit">${s}</span>
         <span class="shift-sub">${m.label}</span>
         <span class="shift-time">${m.time} <span class="shift-tz">${tzLabel}</span></span>
         <span class="shift-cnt outfit">${work.length}</span>
       </div>
-      <div style="background:#fff;padding:3px 10px 6px;">${rows || '<span style="font-size:11px;color:#ccc;">—</span>'}</div>
+      <div class="card-body">${workHtml}${leaveHtml}</div>
     </div>`;
   }
 
@@ -271,8 +269,9 @@ body::before {
   display:flex; flex-direction:column; align-items:center;
   background:rgba(255,255,255,.07); border:1px solid rgba(255,255,255,.12);
   border-radius:8px; padding:3px 7px; min-width:30px;
+  backdrop-filter:blur(6px);
 }
-.stat-chip .n { font-size:14px; font-weight:900; line-height:1; }
+.stat-chip .n { font-size:14px; font-weight:900; line-height:1; text-shadow:0 0 10px currentColor; }
 .stat-chip .l { font-size:9px;  font-weight:700; margin-top:1px; }
 
 #main {
@@ -294,22 +293,70 @@ body::before {
 .card-hdr .shift-tz  { font-size:8px;  color:rgba(255,255,255,.4); }
 .card-hdr .shift-cnt { background:rgba(255,255,255,.22); border-radius:999px; padding:1px 8px; font-size:11px; font-weight:900; color:#fff; margin-left:4px; }
 
-/* person row compact */
-.p-row { display:flex; align-items:center; gap:6px; padding:3px 0; border-bottom:1px solid #f1f5f9; }
-.p-row:last-child { border-bottom:none; }
-.p-av  { width:22px; height:22px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:8px; font-weight:900; flex-shrink:0; }
-.p-nm   { font-size:13px; font-weight:800; color:#0f172a; }
-.p-role  { font-size:10px; font-weight:600; margin-left:4px; color:#64748b; white-space:nowrap; }
+/* ── Glassmorphism shift card ── */
+.shift-card {
+  border-radius:14px; overflow:hidden;
+  border:1px solid rgba(255,255,255,.13);
+  background:rgba(8,18,50,.55);
+  backdrop-filter:blur(14px);
+  -webkit-backdrop-filter:blur(14px);
+  box-shadow:0 8px 32px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.08);
+  display:flex; flex-direction:column;
+}
+.card-hdr {
+  padding:8px 12px;
+  display:flex; align-items:center; gap:5px;
+  position:relative;
+}
+.card-hdr::after {
+  content:''; position:absolute; bottom:0; left:0; right:0;
+  height:1px; background:rgba(255,255,255,.15);
+}
+.card-body {
+  padding:7px 10px 8px;
+  display:flex; flex-direction:column; gap:4px;
+  background:rgba(255,255,255,.025);
+}
+/* shift header text */
+.card-hdr .shift-lbl { font-size:15px; font-weight:900; color:#fff; letter-spacing:1px; }
+.card-hdr .shift-sub { font-size:10px; font-weight:600; color:rgba(255,255,255,.75); }
+.card-hdr .shift-time{ font-size:9px;  color:rgba(255,255,255,.6); margin-left:auto; }
+.card-hdr .shift-tz  { font-size:8px;  color:rgba(255,255,255,.4); }
+.card-hdr .shift-cnt {
+  background:rgba(255,255,255,.25); border-radius:999px;
+  padding:2px 9px; font-size:12px; font-weight:900; color:#fff; margin-left:4px;
+  box-shadow:0 0 10px rgba(255,255,255,.15);
+}
+/* ── Person mini-card (WORK) ── */
+.p-card {
+  display:flex; align-items:center; gap:7px;
+  padding:5px 10px;
+  background:rgba(255,255,255,.93);
+  border-radius:8px;
+  border:1px solid rgba(0,0,0,.04);
+  box-shadow:0 1px 4px rgba(0,0,0,.08);
+}
+.p-av  { width:24px; height:24px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:8px; font-weight:900; flex-shrink:0; }
+.p-nm  { font-size:13px; font-weight:800; color:#0f172a; }
+.p-role{ font-size:10px; font-weight:600; margin-left:4px; color:#64748b; white-space:nowrap; }
 .p-badge { padding:1px 6px; border-radius:4px; border-width:1px; border-style:solid; }
-.p-dp  { font-size:9px;  color:#94a3b8; font-weight:500; margin-left:3px; }
-.leave-pill { margin-left:auto; flex-shrink:0; font-size:9px; font-weight:800; padding:1px 7px; border-radius:999px; letter-spacing:.5px; }
-/* active dot — người đang làm việc */
-.active-dot { width:7px; height:7px; border-radius:50%; background:#22c55e; box-shadow:0 0 5px #22c55e; flex-shrink:0; }
-/* leave row — mờ hơn, không tô nền */
-.p-row-leave { border-bottom-color:#e2e8f0; }
-.p-av-dim    { opacity:.5; }
-.p-nm-dim    { color:#94a3b8 !important; font-weight:600; }
-.p-role-dim  { font-size:10px; font-weight:500; margin-left:4px; color:#b0bec5; white-space:nowrap; }
+/* active dot */
+.active-dot { width:7px; height:7px; border-radius:50%; background:#22c55e; box-shadow:0 0 6px #22c55e; flex-shrink:0; }
+/* ── Leave compact tags ── */
+.leave-tags-row {
+  display:flex; flex-wrap:wrap; gap:5px;
+  padding-top:6px; margin-top:2px;
+  border-top:1px solid rgba(255,255,255,.1);
+}
+.leave-tag {
+  display:inline-flex; align-items:center; gap:5px;
+  padding:3px 9px 3px 5px; border-radius:999px;
+  font-size:10px; font-weight:700; white-space:nowrap;
+}
+.leave-tag-lbl {
+  font-size:8px; font-weight:900; letter-spacing:.5px;
+  padding:1px 5px; border-radius:999px;
+}
 
 #footer { display:none; }
 
@@ -351,7 +398,7 @@ body::before {
   #topbar-date .day { font-size:30px !important; }
   #topbar-date .dt  { font-size:13px !important; letter-spacing:2px !important; }
   .stat-chip { padding:6px 14px; border-radius:10px; min-width:52px; }
-  .stat-chip .n { font-size:20px; }
+  .stat-chip .n { font-size:20px; text-shadow:0 0 14px currentColor; }
   .stat-chip .l { font-size:11px; }
   #stats-row { gap:7px; }
   #dlBtn { font-size:13px; padding:7px 16px; }
@@ -367,14 +414,21 @@ body::before {
   .card-hdr .shift-time{ font-size:12px; }
   .card-hdr .shift-tz  { font-size:10px; }
   .card-hdr .shift-cnt { font-size:13px; }
-  .p-row { gap:10px; padding:6px 0; }
-  .p-av  { width:31px; height:31px; font-size:11px; }
-  .p-nm   { font-size:16px; font-weight:800; }
-  .p-role { font-size:12px; }
-  .p-dp  { font-size:12px; }
-  .leave-pill { font-size:11px; padding:2px 9px; }
+  .shift-card { border-radius:16px; }
+  .card-hdr   { padding:12px 16px; }
+  .card-hdr .shift-lbl { font-size:18px; letter-spacing:2px; }
+  .card-hdr .shift-sub { font-size:13px; }
+  .card-hdr .shift-time{ font-size:11px; }
+  .card-hdr .shift-tz  { font-size:10px; }
+  .card-hdr .shift-cnt { font-size:14px; padding:3px 11px; }
+  .card-body  { padding:10px 12px 12px; gap:6px; }
+  .p-card { padding:7px 12px; border-radius:10px; gap:10px; }
+  .p-av  { width:32px; height:32px; font-size:11px; }
+  .p-nm  { font-size:15px; font-weight:800; }
+  .p-role{ font-size:12px; }
   .active-dot { width:8px; height:8px; }
-  .p-role-dim { font-size:12px; }
+  .leave-tag  { font-size:11px; padding:4px 11px 4px 6px; gap:6px; }
+  .leave-tag-lbl { font-size:9px; padding:2px 6px; }
   #footer { display:block; text-align:center; margin-top:12px; padding:12px 0; border-top:1px solid rgba(255,255,255,.1); font-size:15px; color:#cbd5e1; letter-spacing:1px; font-weight:600; }
   #footer strong { color:#93c5fd; font-weight:800; }
   #quote-bar { margin:12px 12px 10px; padding:13px 28px; border-radius:14px; gap:14px; }

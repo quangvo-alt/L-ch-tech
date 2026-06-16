@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "lich-tech-preview",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["-e", "const h=require('http'),fs=require('fs'),p=process.env.PORT||3000;h.createServer((_,r)=>{r.writeHead(200,{'Content-Type':'text/html;charset=utf-8'});r.end(fs.readFileSync('preview.html'))}).listen(p,()=>console.log('http://localhost:'+p))"],
+      "port": 3000
+    }
+  ]
+}

@@ -182,7 +182,22 @@ function buildHtml(grouped, dateStr, dayName, shiftTimesRaw, tzLabel, quote) {
     return `<div class="stat-chip"><span class="n outfit" style="color:${m.statClr};">${n}</span><span class="l" style="color:${m.statClr};">${s}</span></div>`;
   }).join("");
 
-  // Person mini-card (WORK only — leave rendered as compact tags in shiftCard)
+  // Leave row — dim, pill màu ở cuối
+  function leaveCard(p) {
+    const lm      = LEAVE_META[p.st] || LEAVE_META.OFF;
+    const ini     = esc(initials(p.name));
+    const name    = esc(cleanName(p.name));
+    const rawRole = cleanRole(p.role);
+    const role    = esc(rawRole);
+    const roleHtml = role ? `<span class="p-role p-role-dim">${role}</span>` : "";
+    return `<div class="p-card p-card-leave">
+      <div class="p-av p-av-dim" style="background:${lm.avBg};color:${lm.avTxt};">${ini}</div>
+      <span class="p-nm p-nm-dim">${name}</span>${roleHtml}
+      <span class="leave-pill" style="background:${lm.pillBg};color:${lm.pillTxt};">${p.st}</span>
+    </div>`;
+  }
+
+  // Person mini-card (WORK only)
   function personCard(p, m) {
     const ini      = esc(initials(p.name));
     const name     = esc(cleanName(p.name));
@@ -204,16 +219,9 @@ function buildHtml(grouped, dateStr, dayName, shiftTimesRaw, tzLabel, quote) {
     const leave  = people.filter(p => p.st !== "WORK");
     const m = meta[s];
     const id = s === "C3" ? ' id="card-c3"' : (s === "C2" ? ' id="card-c2"' : '');
-    const workHtml = work.map(p => personCard(p, m)).join("") ||
+    const workHtml  = work.map(p => personCard(p, m)).join("") ||
       '<span style="font-size:11px;color:rgba(255,255,255,.3);padding:4px 0;display:block;">—</span>';
-    const leaveHtml = leave.length ? `<div class="leave-tags-row">${
-      leave.map(p => {
-        const lm = LEAVE_META[p.st] || LEAVE_META.OFF;
-        return `<span class="leave-tag" style="background:${lm.pillBg}22;color:${lm.pillTxt};border:1px solid ${lm.pillBg}88;">` +
-          `<span class="leave-tag-lbl" style="background:${lm.pillBg};color:${lm.pillTxt};">${p.st}</span>` +
-          `${esc(cleanName(p.name))}</span>`;
-      }).join("")
-    }</div>` : "";
+    const leaveHtml = leave.map(p => leaveCard(p)).join("");
     return `<div class="shift-card"${id}>
       <div class="card-hdr" style="background:linear-gradient(135deg,${m.grad});">
         <span class="shift-lbl outfit">${s}</span>
@@ -342,21 +350,12 @@ body::before {
 .p-badge { padding:1px 6px; border-radius:4px; border-width:1px; border-style:solid; }
 /* active dot */
 .active-dot { width:7px; height:7px; border-radius:50%; background:#22c55e; box-shadow:0 0 6px #22c55e; flex-shrink:0; }
-/* ── Leave compact tags ── */
-.leave-tags-row {
-  display:flex; flex-wrap:wrap; gap:5px;
-  padding-top:6px; margin-top:2px;
-  border-top:1px solid rgba(255,255,255,.1);
-}
-.leave-tag {
-  display:inline-flex; align-items:center; gap:5px;
-  padding:3px 9px 3px 5px; border-radius:999px;
-  font-size:10px; font-weight:700; white-space:nowrap;
-}
-.leave-tag-lbl {
-  font-size:8px; font-weight:900; letter-spacing:.5px;
-  padding:1px 5px; border-radius:999px;
-}
+/* ── Leave card (dim) ── */
+.p-card-leave { background:rgba(255,255,255,.5); box-shadow:none; }
+.p-av-dim     { opacity:.5; }
+.p-nm-dim     { color:#475569 !important; font-weight:600; }
+.p-role-dim   { font-size:10px; font-weight:500; margin-left:4px; color:#94a3b8; white-space:nowrap; }
+.leave-pill   { margin-left:auto; flex-shrink:0; font-size:9px; font-weight:800; padding:1px 7px; border-radius:999px; letter-spacing:.5px; }
 
 #footer { display:none; }
 
@@ -427,8 +426,8 @@ body::before {
   .p-nm  { font-size:15px; font-weight:800; }
   .p-role{ font-size:12px; }
   .active-dot { width:8px; height:8px; }
-  .leave-tag  { font-size:11px; padding:4px 11px 4px 6px; gap:6px; }
-  .leave-tag-lbl { font-size:9px; padding:2px 6px; }
+  .leave-pill { font-size:11px; padding:2px 9px; }
+  .p-role-dim { font-size:12px; }
   #footer { display:block; text-align:center; margin-top:12px; padding:12px 0; border-top:1px solid rgba(255,255,255,.1); font-size:15px; color:#cbd5e1; letter-spacing:1px; font-weight:600; }
   #footer strong { color:#93c5fd; font-weight:800; }
   #quote-bar { margin:12px 12px 10px; padding:13px 28px; border-radius:14px; gap:14px; }

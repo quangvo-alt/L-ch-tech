@@ -1,6 +1,6 @@
 // ============================================================
 //  TECH SHIFT DASHBOARD v7
-//  Tab: "Filter" | E=Ca cố định · H=Tên · I=Vai trò · J=Trạng thái hôm nay
+//  Tab: "Filter" | B=Tên · C=Vai trò · D=Trạng thái hôm nay · E=Ca cố định
 //  Shift: C1 C2 C3 ME NP HO OFF · I1 = ngày (=TODAY())
 //  Deploy: Execute as Me · Who has access: Anyone
 // ============================================================
@@ -54,7 +54,7 @@ function doGet() {
 
   const lastRow = sheet.getLastRow();
   if (lastRow < 3) return HtmlService.createHtmlOutput("<p>Không có dữ liệu</p>");
-  const raw = sheet.getRange(3, 5, lastRow - 2, 6).getValues();  // cột E..J
+  const raw = sheet.getRange(3, 2, lastRow - 2, 4).getValues();  // cột B..E
 
   // Daily motivational quote — changes every day
   const quotes = [
@@ -93,17 +93,17 @@ function doGet() {
   const dayOfYear = parseInt(Utilities.formatDate(today, tz, "D"), 10);
   const quote     = quotes[dayOfYear % quotes.length];
 
-  // Cột: E = ca cố định | H = tên | I = vai trò | J = trạng thái hôm nay
+  // Cột: B = tên | C = vai trò | D = trạng thái hôm nay | E = ca cố định
   const WORK  = { C1:1, C2:1, C3:1 };
   const LEAVE = { OFF:1, ME:1, NP:1, HO:1 };
   const grouped = { C1:[], C2:[], C3:[] };
   const norm = v => (v == null ? "" : v).toString().trim().toUpperCase();
 
   raw.forEach(row => {
-    const home   = norm(row[0]);                       // E = ca cố định
-    const name   = (row[3] || "").toString().trim();   // H = tên
-    const role   = (row[4] || "").toString().trim();   // I = vai trò
-    const status = norm(row[5]);                        // J = trạng thái hôm nay
+    const name   = (row[0] || "").toString().trim();   // B = tên
+    const role   = (row[1] || "").toString().trim();   // C = vai trò
+    const status = norm(row[2]);                        // D = trạng thái hôm nay
+    const home   = norm(row[3]);                        // E = ca cố định
     if (!name) return;
     if (/[0-9:\/]/.test(name)) return;                 // dòng rác (legend/giờ giấc)
     if (WORK[status]) {                                // đi làm → card theo ca hôm nay (J)

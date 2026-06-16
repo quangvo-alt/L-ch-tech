@@ -1,8 +1,7 @@
 // ============================================================
 //  TECH SHIFT DASHBOARD v7
-//  Layout tự co theo nội dung · Chữ to · Không cắt
-//  Tab: "Filter" | Cột G = Tên | H = Dept | I = Shift
-//  Shift: C1 C2 C3 ME NP HO OFF
+//  Tab: "Filter" | E=Ca cố định · H=Tên · I=Vai trò · J=Trạng thái hôm nay
+//  Shift: C1 C2 C3 ME NP HO OFF · I1 = ngày (=TODAY())
 //  Deploy: Execute as Me · Who has access: Anyone
 // ============================================================
 
@@ -212,7 +211,7 @@ function buildHtml(grouped, dateStr, dayName, shiftTimesRaw, tzLabel, quote) {
     </div>`;
   }
 
-  // Shift card C1/C2/C3 — glass card; WORK = mini-cards; LEAVE = compact tags ở dưới
+  // Shift card C1/C2/C3 — glass card; WORK = mini-cards sáng; LEAVE = dim rows ở dưới
   function shiftCard(s) {
     const people = grouped[s] || [];
     const work   = people.filter(p => p.st === "WORK");
@@ -251,7 +250,7 @@ body {
   position:relative;
 }
 body::before {
-  content:''; position:fixed; inset:0; pointer-events:none; z-index:0;
+  content:''; position:absolute; inset:0; pointer-events:none; z-index:0;
   background-image:
     linear-gradient(rgba(99,179,237,.04) 1px,transparent 1px),
     linear-gradient(90deg,rgba(99,179,237,.04) 1px,transparent 1px);
@@ -289,17 +288,6 @@ body::before {
   gap:5px;
   padding:0 5px;
 }
-
-/* card header compact */
-.card-hdr {
-  padding:6px 10px;
-  display:flex; align-items:center; gap:5px;
-}
-.card-hdr .shift-lbl { font-size:14px; font-weight:900; color:#fff; }
-.card-hdr .shift-sub { font-size:10px; font-weight:600; color:rgba(255,255,255,.75); }
-.card-hdr .shift-time{ font-size:9px;  color:rgba(255,255,255,.6); margin-left:auto; }
-.card-hdr .shift-tz  { font-size:8px;  color:rgba(255,255,255,.4); }
-.card-hdr .shift-cnt { background:rgba(255,255,255,.22); border-radius:999px; padding:1px 8px; font-size:11px; font-weight:900; color:#fff; margin-left:4px; }
 
 /* ── Glassmorphism shift card ── */
 .shift-card {
@@ -407,12 +395,6 @@ body::before {
     gap:10px; padding:0 12px;
   }
   #card-c2   { margin-left:16px; }
-  .card-hdr  { padding:10px 14px; }
-  .card-hdr .shift-lbl { font-size:16px; }
-  .card-hdr .shift-sub { font-size:14px; }
-  .card-hdr .shift-time{ font-size:12px; }
-  .card-hdr .shift-tz  { font-size:10px; }
-  .card-hdr .shift-cnt { font-size:13px; }
   .shift-card { border-radius:16px; }
   .card-hdr   { padding:12px 16px; }
   .card-hdr .shift-lbl { font-size:18px; letter-spacing:2px; }
@@ -492,6 +474,13 @@ function copyImg() {
     a.download = 'tech-shift.png'; a.click();
   }
 
+  // html2canvas không hỗ trợ backdrop-filter → disable trước khi chụp, restore sau
+  const glassEls = [...document.querySelectorAll('.shift-card,.stat-chip')];
+  glassEls.forEach(el => { el.style.backdropFilter = 'none'; el.style.webkitBackdropFilter = 'none'; });
+  function restoreGlass() {
+    glassEls.forEach(el => { el.style.backdropFilter = ''; el.style.webkitBackdropFilter = ''; });
+  }
+
   // Chờ font web load xong (tránh chữ bị mờ / fallback) rồi mới chụp
   const ready = document.fonts && document.fonts.ready ? document.fonts.ready : Promise.resolve();
   ready.then(function() {
@@ -510,6 +499,7 @@ function copyImg() {
       windowHeight: H
     });
   }).then(canvas => {
+    restoreGlass();
     canvas.toBlob(blob => {
       if (!blob) { reset(); flash('❌ Không tạo được ảnh, thử lại.'); return; }
       const canCopy = navigator.clipboard && window.ClipboardItem;
@@ -519,6 +509,7 @@ function copyImg() {
         .catch(() => { download(canvas); reset(); flash('⚠️ Clipboard bị chặn, đã tải xuống.'); });
     }, 'image/png');
   }).catch(err => {
+    restoreGlass();
     reset();
     flash('❌ Lỗi tạo ảnh: ' + (err && err.message ? err.message : err), 6000);
   });

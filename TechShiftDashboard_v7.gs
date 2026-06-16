@@ -55,7 +55,7 @@ function doGet() {
 
   const lastRow = sheet.getLastRow();
   if (lastRow < 3) return HtmlService.createHtmlOutput("<p>Không có dữ liệu</p>");
-  const raw = sheet.getRange(3, 7, lastRow - 2, 3).getValues();
+  const raw = sheet.getRange(3, 5, lastRow - 2, 6).getValues();  // cột E..J
 
   // Daily motivational quote — changes every day
   const quotes = [
@@ -94,28 +94,35 @@ function doGet() {
   const dayOfYear = parseInt(Utilities.formatDate(today, tz, "D"), 10);
   const quote     = quotes[dayOfYear % quotes.length];
 
-  const shiftOrder = ["C1","C2","C3","ME","NP","HO","OFF"];
-  const grouped = {};
-  shiftOrder.forEach(s => grouped[s] = []);
+  // Cột: E = ca cố định | H = tên | I = vai trò | J = trạng thái hôm nay
+  const WORK  = { C1:1, C2:1, C3:1 };
+  const LEAVE = { OFF:1, ME:1, NP:1, HO:1 };
+  const grouped = { C1:[], C2:[], C3:[] };
+  const norm = v => (v == null ? "" : v).toString().trim().toUpperCase();
 
   raw.forEach(row => {
-    const name  = (row[0] || "").toString().trim();
-    const dept  = (row[1] || "").toString().trim();
-    const shift = (row[2] || "").toString().trim().toUpperCase();
+    const home   = norm(row[0]);                       // E = ca cố định
+    const name   = (row[3] || "").toString().trim();   // H = tên
+    const role   = (row[4] || "").toString().trim();   // I = vai trò
+    const status = norm(row[5]);                        // J = trạng thái hôm nay
     if (!name) return;
-    if (/[0-9:\/]/.test(name)) return;  // tên chứa số / ":" / "/" → dòng rác (vd "Shift 1 : 7H AM...") → bỏ qua
-    if (grouped[shift] !== undefined)  grouped[shift].push({ name, dept });
-    else if (dept)                     grouped["OFF"].push({ name, dept });  // sai form nhưng có vai trò → mặc định OFF
-    // sai form + không có vai trò → bỏ qua (dòng rác: lời chào, chú thích...)
+    if (/[0-9:\/]/.test(name)) return;                 // dòng rác (legend/giờ giấc)
+    if (WORK[status]) {                                // đi làm → card theo ca hôm nay (J)
+      grouped[status].push({ name, role, st: "WORK" });
+    } else {                                           // OFF/ME/NP/HO → card theo ca cố định (E)
+      if (!WORK[home]) return;                         // không rõ ca cố định → bỏ qua
+      const st = LEAVE[status] ? status : (role ? "OFF" : null);  // J lạ: có vai trò → OFF, không → bỏ
+      if (st) grouped[home].push({ name, role, st });
+    }
   });
 
   return HtmlService
-    .createHtmlOutput(buildHtml(grouped, shiftOrder, dateStr, dayName, shiftTimesRaw, tzLabel, quote))
+    .createHtmlOutput(buildHtml(grouped, dateStr, dayName, shiftTimesRaw, tzLabel, quote))
     .setTitle("Tech Shift " + dateStr)
     .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
 }
 
-function buildHtml(grouped, shiftOrder, dateStr, dayName, shiftTimesRaw, tzLabel, quote) {
+function buildHtml(grouped, dateStr, dayName, shiftTimesRaw, tzLabel, quote) {
 
   function fmtHour(h) {
     const period = h < 12 ? "AM" : "PM";
@@ -138,6 +145,14 @@ function buildHtml(grouped, shiftOrder, dateStr, dayName, shiftTimesRaw, tzLabel
     OFF: { label:"Nghỉ",                     time:"",               statClr:"#94a3b8", chipBg:"#1e293b", chipTxt:"#f1f5f9", chipBd:"#475569", lbBg:"#334155", lbTxt:"#f1f5f9" },
   };
 
+  // Màu hàng cho người nghỉ (nằm trong card ca): OFF xám · ME xanh · NP vàng · HO đỏ
+  const LEAVE_META = {
+    OFF: { tint:"#f8fafc", avBg:"#e2e8f0", avTxt:"#475569", pillBg:"#e2e8f0", pillTxt:"#475569" },
+    ME:  { tint:"#eff6ff", avBg:"#dbeafe", avTxt:"#1d4ed8", pillBg:"#dbeafe", pillTxt:"#1d4ed8" },
+    NP:  { tint:"#fffbeb", avBg:"#fef3c7", avTxt:"#92400e", pillBg:"#fde68a", pillTxt:"#92400e" },
+    HO:  { tint:"#fef2f2", avBg:"#fee2e2", avTxt:"#991b1b", pillBg:"#fecaca", pillTxt:"#991b1b" },
+  };
+
   function cleanName(raw) { return raw.replace(/\s*\([^)]*\)/g,"").trim(); }
   function cleanRole(raw) { return (raw || "").trim().replace(/[,;.]+$/, "").trim(); }
   function esc(s) { return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
@@ -151,69 +166,62 @@ function buildHtml(grouped, shiftOrder, dateStr, dayName, shiftTimesRaw, tzLabel
     return cleanName(raw).split(/\s+/).filter(w=>w.length>0).slice(-2).map(w=>w[0].toUpperCase()).join("") || "?";
   }
 
-  const totalWorking = ["C1","C2","C3"].reduce((s,k)=>s+(grouped[k]||[]).length,0);
-  const totalAll     = shiftOrder.reduce((s,k)=>s+(grouped[k]||[]).length,0);
+  const workCount  = { C1:0, C2:0, C3:0 };
+  const leaveCount = { ME:0, NP:0, HO:0, OFF:0 };
+  ["C1","C2","C3"].forEach(s => (grouped[s]||[]).forEach(p => {
+    if (p.st === "WORK") workCount[s]++;
+    else if (leaveCount[p.st] !== undefined) leaveCount[p.st]++;
+  }));
+  const totalWorking = workCount.C1 + workCount.C2 + workCount.C3;
+  const totalAll     = totalWorking + leaveCount.ME + leaveCount.NP + leaveCount.HO + leaveCount.OFF;
+  const statCount    = Object.assign({}, workCount, leaveCount);
 
   // Top stat chips
-  const statChipsHtml = shiftOrder.map(s => {
-    const m = meta[s]; const n = (grouped[s]||[]).length;
+  const statChipsHtml = ["C1","C2","C3","ME","NP","HO","OFF"].map(s => {
+    const m = meta[s]; const n = statCount[s] || 0;
     return `<div class="stat-chip"><span class="n outfit" style="color:${m.statClr};">${n}</span><span class="l" style="color:${m.statClr};">${s}</span></div>`;
   }).join("");
 
-  // Person row inside shift card
-  function pRow(p, m) {
+  // Person row inside shift card — WORK = trắng; OFF/ME/NP/HO = tô màu + pill trạng thái
+  function personRow(p, m) {
     const ini      = esc(initials(p.name));
     const name     = esc(cleanName(p.name));
-    const rawRole  = cleanRole(p.dept);   // column H = Function/Role
+    const rawRole  = cleanRole(p.role);   // cột I = vai trò
     const rs       = roleStyle(rawRole);
     const role     = esc(rawRole);
     const roleHtml = role ? `<span class="${rs ? 'p-role p-badge' : 'p-role'}" style="${rs}">${role}</span>` : "";
-    return `<div class="p-row">
-      <div class="p-av" style="background:${m.avBg};color:${m.avTxt};">${ini}</div>
+    if (p.st === "WORK") {
+      return `<div class="p-row">
+        <div class="p-av" style="background:${m.avBg};color:${m.avTxt};">${ini}</div>
+        <span class="p-nm">${name}</span>${roleHtml}
+      </div>`;
+    }
+    const lm = LEAVE_META[p.st] || LEAVE_META.OFF;
+    return `<div class="p-row" style="background:${lm.tint};">
+      <div class="p-av" style="background:${lm.avBg};color:${lm.avTxt};">${ini}</div>
       <span class="p-nm">${name}</span>${roleHtml}
+      <span class="leave-pill" style="background:${lm.pillBg};color:${lm.pillTxt};">${p.st}</span>
     </div>`;
   }
 
-  // Shift card C1/C2/C3
+  // Shift card C1/C2/C3 — đi làm trước, nghỉ (OFF/ME/NP/HO) sau; badge = số người đi làm
   function shiftCard(s) {
-    const people = grouped[s]||[];
+    const people = grouped[s] || [];
+    const work   = people.filter(p => p.st === "WORK");
+    const leave  = people.filter(p => p.st !== "WORK");
     const m = meta[s];
-    const rows = people.map(p=>pRow(p,m)).join("");
+    const rows = work.concat(leave).map(p => personRow(p, m)).join("");
     const id   = s === "C3" ? ' id="card-c3"' : (s === "C2" ? ' id="card-c2"' : '');
     return `<div${id} style="border-radius:10px;overflow:hidden;border:1px solid rgba(255,255,255,.08);display:flex;flex-direction:column;">
       <div class="card-hdr" style="background:linear-gradient(90deg,${m.grad});">
         <span class="shift-lbl outfit">${s}</span>
         <span class="shift-sub">${m.label}</span>
         <span class="shift-time">${m.time} <span class="shift-tz">${tzLabel}</span></span>
-        <span class="shift-cnt outfit">${people.length}</span>
+        <span class="shift-cnt outfit">${work.length}</span>
       </div>
       <div style="background:#fff;padding:3px 10px 6px;">${rows || '<span style="font-size:11px;color:#ccc;">—</span>'}</div>
     </div>`;
   }
-
-  // Name chip for "other" col
-  // Người nghỉ (ME/NP/HO/OFF): chỉ hiện tên, bỏ vai trò để tối ưu diện tích
-  function chip(p, m) {
-    const name = esc(cleanName(p.name));
-    return `<div class="oth-chip" style="background:${m.chipBg};color:${m.chipTxt};border-color:${m.chipBd};">${name}</div>`;
-  }
-
-  // Section inside "other" col
-  function otherSec(s) {
-    const people = grouped[s]||[]; const m = meta[s];
-    const chips  = people.length
-      ? people.map(p=>chip(p,m)).join("")
-      : `<span style="font-size:10px;color:#334155;font-style:italic;">Không có</span>`;
-    return `<div class="oth-sec">
-      <div class="oth-lbl" style="background:${m.lbBg};color:${m.lbTxt};">
-        ${s} — ${m.label}
-        <span style="background:rgba(255,255,255,.2);border-radius:999px;padding:0 6px;">${people.length}</span>
-      </div>
-      <div class="oth-chips">${chips}</div>
-    </div>`;
-  }
-
-  const otherHtml = ["ME","NP","HO","OFF"].map(s=>otherSec(s)).join("");
 
   return `<!DOCTYPE html>
 <html lang="vi">
@@ -266,20 +274,9 @@ body::before {
 #main {
   position:relative; z-index:1;
   display:grid;
-  grid-template-columns:1fr 1fr;
-  grid-template-rows:auto auto;
+  grid-template-columns:1fr;
   gap:5px;
   padding:0 5px;
-}
-/* C3 + other đều full-width → hàng 2 */
-#card-c3    { grid-column:1; grid-row:2; }
-#other-col  { grid-column:2; grid-row:2; }
-
-#other-col {
-  border-radius:8px;
-  background:#0d1b35;
-  border:1px solid rgba(255,255,255,.08);
-  padding:8px 8px;
 }
 
 /* card header compact */
@@ -301,12 +298,7 @@ body::before {
 .p-role  { font-size:10px; font-weight:600; margin-left:4px; color:#64748b; white-space:nowrap; }
 .p-badge { padding:1px 6px; border-radius:4px; border-width:1px; border-style:solid; }
 .p-dp  { font-size:9px;  color:#94a3b8; font-weight:500; margin-left:3px; }
-
-/* other section compact */
-.oth-sec  { margin-bottom:8px; }
-.oth-lbl  { display:inline-flex; align-items:center; gap:4px; border-radius:5px; padding:3px 8px; font-size:9px; font-weight:800; margin-bottom:5px; }
-.oth-chips{ display:flex; flex-wrap:wrap; gap:3px; }
-.oth-chip { border-radius:5px; padding:3px 7px; font-size:10px; font-weight:700; border-width:1px; border-style:solid; white-space:nowrap; }
+.leave-pill { margin-left:auto; flex-shrink:0; font-size:9px; font-weight:800; padding:1px 7px; border-radius:999px; letter-spacing:.5px; }
 
 #footer { display:none; }
 
@@ -354,13 +346,10 @@ body::before {
   #dlBtn { font-size:13px; padding:7px 16px; }
   #status { display:inline; font-size:11px; color:#38bdf8; }
   #main {
-    grid-template-columns:1fr 1fr 1fr 320px;
-    grid-template-rows:auto;
+    grid-template-columns:1fr 1fr 1fr;
     gap:10px; padding:0 12px;
   }
-  #card-c3   { grid-column:auto; grid-row:auto; }
   #card-c2   { margin-left:16px; }
-  #other-col { grid-column:auto; grid-row:auto; padding:14px 13px; }
   .card-hdr  { padding:10px 14px; }
   .card-hdr .shift-lbl { font-size:16px; }
   .card-hdr .shift-sub { font-size:14px; }
@@ -372,10 +361,7 @@ body::before {
   .p-nm   { font-size:16px; font-weight:800; }
   .p-role { font-size:12px; }
   .p-dp  { font-size:12px; }
-  .oth-lbl  { font-size:12px; padding:4px 11px; }
-  .oth-chip { font-size:13px; padding:5px 11px; border-radius:6px; }
-  .oth-sec  { margin-bottom:14px; }
-  #other-col > div:first-child { font-size:13px; margin-bottom:12px; }
+  .leave-pill { font-size:11px; padding:2px 9px; }
   #footer { display:block; text-align:center; margin-top:12px; padding:12px 0; border-top:1px solid rgba(255,255,255,.1); font-size:15px; color:#cbd5e1; letter-spacing:1px; font-weight:600; }
   #footer strong { color:#93c5fd; font-weight:800; }
   #quote-bar { margin:12px 12px 10px; padding:13px 28px; border-radius:14px; gap:14px; }
@@ -411,10 +397,6 @@ body::before {
   ${shiftCard("C1")}
   ${shiftCard("C3")}
   ${shiftCard("C2")}
-  <div id="other-col">
-    <div style="font-size:11px;font-weight:900;color:#e2e8f0;letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;">Trạng thái khác</div>
-    ${otherHtml}
-  </div>
 </div>
 
 <div id="footer">

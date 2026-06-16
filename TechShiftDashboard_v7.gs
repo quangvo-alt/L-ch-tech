@@ -351,10 +351,10 @@ body::before {
 /* active dot */
 .active-dot { width:7px; height:7px; border-radius:50%; background:#22c55e; box-shadow:0 0 6px #22c55e; flex-shrink:0; }
 /* ── Leave card (dim) ── */
-.p-card-leave { background:rgba(255,255,255,.5); box-shadow:none; }
-.p-av-dim     { opacity:.5; }
-.p-nm-dim     { color:#475569 !important; font-weight:600; }
-.p-role-dim   { font-size:10px; font-weight:500; margin-left:4px; color:#94a3b8; white-space:nowrap; }
+.p-card-leave { background:rgba(255,255,255,.75); box-shadow:none; }
+.p-av-dim     { opacity:.6; }
+.p-nm-dim     { color:#1e293b !important; font-weight:700; }
+.p-role-dim   { font-size:10px; font-weight:500; margin-left:4px; color:#64748b; white-space:nowrap; }
 .leave-pill   { margin-left:auto; flex-shrink:0; font-size:9px; font-weight:800; padding:1px 7px; border-radius:999px; letter-spacing:.5px; }
 
 #footer { display:none; }

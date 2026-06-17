@@ -107,9 +107,8 @@ function doGet() {
     if (/[0-9:\/]/.test(name)) return;                 // dòng rác (legend/giờ giấc)
     if (WORK[status]) {
       grouped[status].push({ name, role, st: "WORK" });
-    } else {
-      const st = LEAVE[status] ? status : (role ? "OFF" : null);
-      if (st) grouped.OTHER.push({ name, role, st });
+    } else if (LEAVE[status]) {
+      grouped.OTHER.push({ name, role, st: status });
     }
   });
 

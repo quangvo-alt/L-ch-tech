@@ -402,13 +402,14 @@ body::before {
     grid-template-columns:1fr 1fr 1fr;
     gap:10px; padding:0 12px;
   }
-  #main.has-other { grid-template-columns:1fr 1fr 1fr 280px; }
-  /* OFF column — compact cards, no text wrap */
-  #card-other .p-card-leave { padding:5px 10px; gap:6px; overflow:hidden; }
-  #card-other .p-av-dim     { width:26px; height:26px; font-size:9px; flex-shrink:0; }
-  #card-other .p-nm-dim     { font-size:14px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; flex-shrink:1; min-width:0; }
-  #card-other .p-role-dim   { font-size:10px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; flex:1; min-width:0; }
-  #card-other .leave-pill   { font-size:10px; padding:1px 7px; flex-shrink:0; }
+  #main.has-other { grid-template-columns:1fr 1fr 1fr 230px; }
+  /* OFF column — nhỏ hơn shift cards, compact */
+  #card-other .p-card-leave { padding:4px 8px; gap:5px; overflow:hidden; min-width:0; }
+  #card-other .p-av-dim     { width:22px; height:22px; font-size:8px; flex-shrink:0; }
+  #card-other .p-nm-dim     { font-size:12px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; flex-shrink:1; min-width:0; }
+  #card-other .p-role-dim   { font-size:9px; margin-left:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; flex:1; min-width:0; }
+  #card-other .leave-pill   { font-size:9px; padding:1px 6px; letter-spacing:0; flex-shrink:0; }
+  #card-other .card-body    { padding:6px 8px 8px; gap:3px; }
   #card-c2   { margin-left:16px; }
   .shift-card { border-radius:16px; }
   .card-hdr   { padding:12px 16px; }

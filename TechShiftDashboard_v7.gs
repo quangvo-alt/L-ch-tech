@@ -187,7 +187,7 @@ function buildHtml(grouped, dateStr, dayName, shiftTimesRaw, tzLabel, quote) {
     return `<div class="p-card p-card-leave">
       <div class="p-av p-av-dim" style="background:${lm.avBg};color:${lm.avTxt};">${ini}</div>
       <span class="p-nm p-nm-dim">${name}</span>${roleHtml}
-      <span class="leave-pill" style="background:${lm.pillBg};color:${lm.pillTxt};">${p.st}</span>
+      <span class="leave-pill" style="background:${lm.pillBg};color:${lm.pillTxt};">${esc(p.st)}</span>
     </div>`;
   }
 
@@ -256,6 +256,7 @@ body {
   background:#0B1426;
   padding-bottom:8px;
   position:relative;
+  min-height:100vh;
 }
 body::before {
   content:''; position:absolute; inset:0; pointer-events:none; z-index:0;
@@ -410,7 +411,8 @@ body::before {
   #card-other .p-role-dim   { font-size:9px; margin-left:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; flex:1; min-width:0; }
   #card-other .leave-pill   { font-size:9px; padding:1px 6px; letter-spacing:0; flex-shrink:0; }
   #card-other .card-body    { padding:6px 8px 8px; gap:3px; }
-  #card-c2   { margin-left:16px; }
+  #card-c2              { margin-left:16px; }
+  #main.has-other #card-c2 { margin-left:0; }
   .shift-card { border-radius:16px; }
   .card-hdr   { padding:12px 16px; }
   .card-hdr .shift-lbl { font-size:18px; letter-spacing:2px; }

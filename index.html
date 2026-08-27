@@ -23,7 +23,7 @@
   --row-name:   #0f172a;
   --row-role:   #64748b;
   --lv-bg:      rgba(255,255,255,.75);
-  --lv-name:    #475569;
+  --lv-name:    #334155;
   --lv-role:    #94a3b8;
   --txt:        #e2e8f0;
   --txt2:       #94a3b8;
@@ -32,8 +32,6 @@
   --badge-bdr:  rgba(255,255,255,.12);
   --empty:      rgba(255,255,255,.2);
   --footer-bdr: rgba(255,255,255,.07);
-  --quote-bg:   linear-gradient(135deg,rgba(20,45,110,.55),rgba(10,22,60,.6));
-  --quote-bdr:  rgba(99,179,237,.22);
   --topbar-bg:  linear-gradient(90deg,rgba(8,18,55,.98),rgba(18,45,130,.94));
   --topbar-bdr: rgba(99,179,237,.18);
   --stat-bg:    rgba(255,255,255,.1);
@@ -57,7 +55,7 @@
   --row-name:   #0f172a;
   --row-role:   #64748b;
   --lv-bg:      #f1f5f9;
-  --lv-name:    #475569;
+  --lv-name:    #334155;
   --lv-role:    #94a3b8;
   --txt:        #0f172a;
   --txt2:       #475569;
@@ -66,8 +64,6 @@
   --badge-bdr:  rgba(0,0,0,.1);
   --empty:      #cbd5e1;
   --footer-bdr: rgba(0,0,0,.08);
-  --quote-bg:   linear-gradient(135deg,rgba(219,234,254,.6),rgba(239,246,255,.7));
-  --quote-bdr:  rgba(59,130,246,.18);
   --topbar-bg:  linear-gradient(90deg,#1a3a8a,#2563eb);
   --topbar-bdr: rgba(255,255,255,.12);
   --stat-bg:    rgba(255,255,255,.18);
@@ -98,11 +94,7 @@ body::before{
   position:fixed;inset:0;background:var(--bg);z-index:100;
   display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;
 }
-.spinner{
-  width:36px;height:36px;border-radius:50%;
-  border:3px solid rgba(59,130,246,.2);border-top-color:#3b82f6;
-  animation:spin .75s linear infinite;
-}
+.spinner{width:36px;height:36px;border-radius:50%;border:3px solid rgba(59,130,246,.2);border-top-color:#3b82f6;animation:spin .75s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 #loading p{color:var(--txt3);font-size:13px}
 
@@ -119,19 +111,29 @@ body::before{
   position:sticky;top:0;z-index:10;
 }
 #brand{display:flex;align-items:center;gap:7px;flex-shrink:0}
-.live-dot{
-  width:8px;height:8px;border-radius:50%;
-  background:#22c55e;box-shadow:0 0 8px #22c55e;
-  animation:pulse 2.2s ease infinite;
-}
+.live-dot{width:8px;height:8px;border-radius:50%;background:#22c55e;box-shadow:0 0 8px #22c55e;animation:pulse 2.2s ease infinite}
 @keyframes pulse{0%,100%{opacity:1;box-shadow:0 0 8px #22c55e}50%{opacity:.35;box-shadow:0 0 3px #22c55e}}
-#brand span{
-  font-family:'Outfit',sans-serif;font-size:13px;font-weight:900;
-  color:#fff;letter-spacing:3px;text-transform:uppercase;
+#brand span{font-family:'Outfit',sans-serif;font-size:13px;font-weight:900;color:#fff;letter-spacing:3px;text-transform:uppercase}
+
+/* DATE + QUOTE block (center) */
+#date-block{flex:1;text-align:center;min-width:0;padding:0 8px}
+#day-name{font-family:'Outfit',sans-serif;font-size:22px;font-weight:900;color:#fff;line-height:1}
+#date-str{font-size:10px;color:rgba(255,255,255,.65);margin-top:2px;font-weight:600;letter-spacing:.4px}
+#quote-line{
+  font-size:13px;font-style:italic;font-weight:500;
+  color:rgba(255,255,255,.92);
+  margin-top:5px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  letter-spacing:.1px;
 }
-#date-block{flex:1;text-align:center}
-#day-name{font-family:'Outfit',sans-serif;font-size:21px;font-weight:900;color:#fff;line-height:1}
-#date-str{font-size:10px;color:rgba(255,255,255,.7);margin-top:2px;font-weight:600;letter-spacing:.4px}
+#quote-line .q-author{
+  font-style:normal;font-weight:700;
+  color:#93c5fd;margin-left:5px;
+  font-size:11px;letter-spacing:.5px;
+  white-space:nowrap;
+}
+
+/* STATS */
 #stats-row{display:flex;align-items:center;gap:4px;flex-shrink:0}
 .stat-chip{
   display:flex;flex-direction:column;align-items:center;
@@ -141,10 +143,11 @@ body::before{
 }
 .stat-chip .n{font-family:'Outfit',sans-serif;font-size:14px;font-weight:900;line-height:1;text-shadow:0 0 10px currentColor}
 .stat-chip .l{font-size:8px;font-weight:700;margin-top:1px;color:var(--stat-lbl)}
+
+/* ACTIONS */
 #actions{display:flex;align-items:center;gap:5px;flex-shrink:0}
 .t-btn{
-  height:30px;
-  background:var(--btn-bg);color:var(--btn-txt);
+  height:30px;background:var(--btn-bg);color:var(--btn-txt);
   border:1px solid var(--btn-bdr);border-radius:7px;
   font-family:'Plus Jakarta Sans',sans-serif;font-size:11px;font-weight:700;
   cursor:pointer;display:flex;align-items:center;justify-content:center;gap:4px;
@@ -156,11 +159,8 @@ body::before{
 #refresh-btn,#theme-btn{width:30px;font-size:14px}
 #status-msg{font-size:10px;color:rgba(255,255,255,.7);white-space:nowrap}
 
-/* ── GRID ─────────────────────────────────────────────────────── */
-#main{
-  display:grid;grid-template-columns:1fr;
-  gap:10px;padding:12px 10px 0;
-}
+/* ── MAIN GRID (3 cols only, no more 4th col) ─────────────────── */
+#main{display:grid;grid-template-columns:1fr;gap:10px;padding:12px 10px 0}
 
 /* ── SHIFT CARD ───────────────────────────────────────────────── */
 .shift-card{
@@ -172,27 +172,18 @@ body::before{
   display:flex;flex-direction:column;
 }
 .card-hdr{
-  padding:10px 14px;
-  display:flex;align-items:center;gap:8px;
-  background:var(--hdr-bg);
-  border-bottom:1px solid var(--hdr-border);
-  position:relative;
+  padding:10px 14px;display:flex;align-items:center;gap:8px;
+  background:var(--hdr-bg);border-bottom:1px solid var(--hdr-border);position:relative;
 }
-.hdr-accent{
-  position:absolute;left:0;top:0;bottom:0;width:4px;
-}
-.hdr-lbl{
-  font-family:'Outfit',sans-serif;font-size:20px;font-weight:900;
-  color:var(--txt);letter-spacing:1px;margin-left:6px;
-}
+.hdr-accent{position:absolute;left:0;top:0;bottom:0;width:4px}
+.hdr-lbl{font-family:'Outfit',sans-serif;font-size:20px;font-weight:900;color:var(--txt);letter-spacing:1px;margin-left:6px}
 .hdr-sub{font-size:10px;font-weight:600;color:var(--txt2)}
 .hdr-time{font-size:9px;color:var(--txt3);margin-left:auto;text-align:right;line-height:1.5}
 .hdr-tz{font-size:8px;color:var(--txt3);opacity:.7}
 .hdr-cnt{
   background:var(--badge-bg);border:1px solid var(--badge-bdr);
   border-radius:999px;padding:2px 10px;
-  font-family:'Outfit',sans-serif;font-size:13px;font-weight:900;
-  color:var(--txt);flex-shrink:0;
+  font-family:'Outfit',sans-serif;font-size:13px;font-weight:900;color:var(--txt);flex-shrink:0;
 }
 .card-body{padding:8px 10px 10px;display:flex;flex-direction:column;gap:4px}
 
@@ -200,64 +191,62 @@ body::before{
 .p-row{
   display:flex;align-items:center;gap:8px;
   padding:6px 10px;border-radius:9px;
-  background:var(--row-bg);
-  border:1px solid var(--row-border);
+  background:var(--row-bg);border:1px solid var(--row-border);
 }
 .p-dot{width:6px;height:6px;border-radius:50%;background:#22c55e;box-shadow:0 0 5px #22c55e;flex-shrink:0}
 .p-av{
-  width:28px;height:28px;border-radius:50%;
+  width:30px;height:30px;border-radius:50%;
   display:flex;align-items:center;justify-content:center;
-  font-family:'Outfit',sans-serif;font-size:9px;font-weight:900;flex-shrink:0;
+  font-family:'Outfit',sans-serif;font-size:10px;font-weight:900;flex-shrink:0;
 }
-.p-name{font-size:13px;font-weight:800;color:var(--row-name);flex:1}
-.p-role{font-size:10px;font-weight:600;color:var(--row-role);white-space:nowrap}
-.p-badge{padding:1px 6px;border-radius:5px;border-width:1px;border-style:solid;font-size:9px;font-weight:800}
+.p-name{font-size:15px;font-weight:800;color:var(--row-name);flex:1}
+.p-role{font-size:11px;font-weight:600;color:var(--row-role);white-space:nowrap}
+.p-badge{padding:2px 7px;border-radius:5px;border-width:1px;border-style:solid;font-size:10px;font-weight:800}
+.empty-row{font-size:11px;color:var(--empty);padding:8px 0;text-align:center}
 
-/* ── LEAVE ROW ────────────────────────────────────────────────── */
-.l-row{
-  display:flex;align-items:center;gap:7px;
-  padding:5px 8px;border-radius:7px;
-  background:var(--lv-bg);
+/* ── OFF ROW (horizontal, full width, below grid) ─────────────── */
+#off-row{
+  margin:10px 10px 0;
+  border-radius:14px;overflow:hidden;
   border:1px solid var(--card-border);
-  overflow:hidden;min-width:0;
+  background:var(--card-bg);
+  backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+  box-shadow:var(--card-shadow),inset 0 1px 0 var(--card-inset);
+}
+#off-row .card-hdr{
+  padding:9px 14px;display:flex;align-items:center;gap:8px;
+  background:var(--hdr-bg);border-bottom:1px solid var(--hdr-border);position:relative;
+}
+#off-chips{
+  display:flex;flex-wrap:wrap;gap:6px;
+  padding:10px 12px 12px;
+}
+.l-chip{
+  display:flex;align-items:center;gap:6px;
+  padding:5px 10px;border-radius:9px;
+  background:var(--lv-bg);border:1px solid var(--card-border);
+  min-width:0;
 }
 .l-av{
-  width:22px;height:22px;border-radius:50%;
+  width:24px;height:24px;border-radius:50%;
   display:flex;align-items:center;justify-content:center;
-  font-family:'Outfit',sans-serif;font-size:7px;font-weight:900;flex-shrink:0;opacity:.7;
+  font-family:'Outfit',sans-serif;font-size:8px;font-weight:900;flex-shrink:0;opacity:.75;
 }
-.l-name{font-size:11px;font-weight:700;color:var(--lv-name);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;flex-shrink:1}
-.l-role{font-size:9px;color:var(--lv-role);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;flex:1}
-.l-pill{font-size:8px;font-weight:800;padding:2px 7px;border-radius:999px;letter-spacing:.3px;flex-shrink:0}
-.empty-row{font-size:11px;color:var(--empty);padding:8px 0;text-align:center}
+.l-name{font-size:13px;font-weight:700;color:var(--lv-name);white-space:nowrap}
+.l-pill{font-size:9px;font-weight:800;padding:2px 8px;border-radius:999px;letter-spacing:.3px;flex-shrink:0}
 
 /* ── FOOTER ───────────────────────────────────────────────────── */
 #footer{display:none;text-align:center;margin-top:10px;padding:9px 0 3px;border-top:1px solid var(--footer-bdr);font-size:11px;color:var(--txt3);letter-spacing:.5px;font-weight:600}
 #footer strong{color:#60a5fa;font-weight:800}
 
-/* ── QUOTE ────────────────────────────────────────────────────── */
-#quote-bar{
-  position:relative;overflow:hidden;
-  margin:12px 10px 10px;padding:12px 20px;
-  background:var(--quote-bg);
-  border:1px solid var(--quote-bdr);border-radius:12px;
-  display:flex;align-items:center;gap:10px;text-align:center;
-}
-#quote-bar::before{
-  content:'';position:absolute;top:0;left:0;right:0;height:2px;
-  background:linear-gradient(90deg,transparent,#3b82f6,#60a5fa,#3b82f6,transparent);
-}
-.qm{font-family:'Outfit',sans-serif;font-weight:900;color:rgba(96,165,250,.28);font-size:30px;line-height:.8;flex-shrink:0}
-.qm-l{align-self:flex-start}.qm-r{align-self:flex-end}
-#qt{font-size:12px;color:var(--txt);font-style:italic;line-height:1.6;font-weight:500}
-#qa{font-size:10px;color:#60a5fa;font-weight:700;letter-spacing:.8px;text-transform:uppercase;margin-top:4px}
-
 /* ── DESKTOP ──────────────────────────────────────────────────── */
 @media(min-width:900px){
   #topbar{padding:10px 22px;gap:10px}
   #brand span{font-size:15px}
-  #day-name{font-size:28px}
+  #day-name{font-size:26px}
   #date-str{font-size:11px}
+  #quote-line{font-size:14px;margin-top:4px}
+  #quote-line .q-author{font-size:12px}
   .stat-chip{padding:4px 10px;min-width:42px;border-radius:9px}
   .stat-chip .n{font-size:17px}
   .stat-chip .l{font-size:9px}
@@ -268,9 +257,6 @@ body::before{
   #status-msg{font-size:11px}
 
   #main{grid-template-columns:1fr 1fr 1fr;gap:12px;padding:14px 20px 0}
-  #main.has-other{grid-template-columns:1fr 1fr 1fr 210px}
-  #card-c2{margin-left:12px}
-  #main.has-other #card-c2{margin-left:0}
 
   .shift-card{border-radius:16px}
   .card-hdr{padding:12px 16px}
@@ -282,23 +268,28 @@ body::before{
   .card-body{padding:10px 12px 12px;gap:5px}
 
   .p-row{padding:7px 12px;border-radius:10px;gap:10px}
-  .p-av{width:32px;height:32px;font-size:10px}
+  .p-av{width:34px;height:34px;font-size:11px}
   .p-dot{width:7px;height:7px}
-  .p-name{font-size:14px}
+  .p-name{font-size:16px}
   .p-role{font-size:11px}
+  .p-badge{font-size:10px}
 
-  .l-row{gap:8px;padding:5px 9px}
-  .l-av{width:24px;height:24px}
-  .l-name{font-size:12px}
-  .l-role{font-size:9px}
-  .l-pill{font-size:9px;padding:2px 8px}
+  #off-row{margin:12px 20px 0;border-radius:16px}
+  #off-row .card-hdr{padding:10px 18px}
+  #off-chips{gap:7px;padding:12px 16px 14px}
+  .l-chip{padding:6px 12px;border-radius:10px;gap:7px}
+  .l-av{width:26px;height:26px;font-size:9px}
+  .l-name{font-size:14px}
+  .l-pill{font-size:10px;padding:2px 9px}
 
-  #card-other .card-body{padding:6px 10px 8px;gap:3px}
   #footer{display:block}
-  #quote-bar{margin:14px 20px 12px;padding:14px 28px}
-  .qm{font-size:38px}
-  #qt{font-size:13px}
-  #qa{font-size:11px}
+}
+
+@media(min-width:1200px){
+  #day-name{font-size:30px}
+  #date-str{font-size:12px}
+  #quote-line{font-size:15px}
+  #quote-line .q-author{font-size:13px}
 }
 </style>
 </head>
@@ -318,6 +309,7 @@ body::before{
     <div id="date-block">
       <div id="day-name"></div>
       <div id="date-str"></div>
+      <div id="quote-line"></div>
     </div>
     <div id="stats-row"></div>
     <div id="actions">
@@ -328,15 +320,16 @@ body::before{
     </div>
   </div>
   <div id="main"></div>
-  <div id="footer"></div>
-  <div id="quote-bar">
-    <span class="qm qm-l">&ldquo;</span>
-    <div style="flex:1;display:flex;flex-direction:column;align-items:center">
-      <div id="qt"></div>
-      <div id="qa"></div>
+  <div id="off-row" style="display:none">
+    <div class="card-hdr">
+      <div class="hdr-accent" style="background:#64748b"></div>
+      <span class="hdr-lbl" style="font-size:15px;letter-spacing:1.5px;margin-left:6px;">OFF</span>
+      <span class="hdr-sub">Vắng mặt</span>
+      <span class="hdr-cnt" id="off-cnt">0</span>
     </div>
-    <span class="qm qm-r">&rdquo;</span>
+    <div id="off-chips"></div>
   </div>
+  <div id="footer"></div>
 </div>
 
 <script>
@@ -344,10 +337,10 @@ body::before{
 (function(){
   try {
     const t = localStorage.getItem("theme");
-    if (t === "light" || t === "dark") {
-      document.documentElement.setAttribute("data-theme", t);
-    }
+    if (t === "light" || t === "dark") document.documentElement.setAttribute("data-theme", t);
   } catch(e){}
+  const btn = document.getElementById("theme-btn");
+  if (btn) btn.textContent = document.documentElement.getAttribute("data-theme") === "light" ? "☀️" : "🌙";
 })();
 
 function toggleTheme() {
@@ -357,12 +350,6 @@ function toggleTheme() {
   document.getElementById("theme-btn").textContent = next === "dark" ? "🌙" : "☀️";
   try { localStorage.setItem("theme", next); } catch(e){}
 }
-
-(function(){
-  const t = document.documentElement.getAttribute("data-theme");
-  const btn = document.getElementById("theme-btn");
-  if (btn) btn.textContent = t === "light" ? "☀️" : "🌙";
-})();
 
 /* ── CONFIG ────────────────────────────────────────────────────── */
 const SP_URL     = "https://lichtech.quang-vo.workers.dev";
@@ -382,15 +369,15 @@ const LEAVE_META = {
   HO: { avBg:"#fee2e2", avTxt:"#991b1b", pillBg:"#fecaca", pillTxt:"#991b1b" },
 };
 const STAT_CFG = [
-  { id:"sw",  key:"work",  lbl:"Work",  clr:"#4ade80" },
-  { id:"sc1", key:"C1",    lbl:"C1",    clr:"#60a5fa" },
-  { id:"sc2", key:"C2",    lbl:"C2",    clr:"#fb923c" },
-  { id:"sc3", key:"C3",    lbl:"C3",    clr:"#4ade80" },
-  { id:"sme", key:"ME",    lbl:"ME",    clr:"#a78bfa" },
-  { id:"snp", key:"NP",    lbl:"NP",    clr:"#fbbf24" },
-  { id:"sho", key:"HO",    lbl:"HO",    clr:"#f87171" },
-  { id:"sof", key:"OFF",   lbl:"OFF",   clr:"#94a3b8" },
-  { id:"st",  key:"total", lbl:"Total", clr:"#fbbf24" },
+  { key:"work",  lbl:"Work",  clr:"#4ade80" },
+  { key:"C1",    lbl:"C1",    clr:"#60a5fa" },
+  { key:"C2",    lbl:"C2",    clr:"#fb923c" },
+  { key:"C3",    lbl:"C3",    clr:"#4ade80" },
+  { key:"ME",    lbl:"ME",    clr:"#a78bfa" },
+  { key:"NP",    lbl:"NP",    clr:"#fbbf24" },
+  { key:"HO",    lbl:"HO",    clr:"#f87171" },
+  { key:"OFF",   lbl:"OFF",   clr:"#94a3b8" },
+  { key:"total", lbl:"Total", clr:"#fbbf24" },
 ];
 const QUOTES = [
   ["The only way to do great work is to love what you do.","Steve Jobs"],
@@ -474,8 +461,8 @@ function cleanRole(r) { return (r||"").trim().replace(/[,;.]+$/,"").trim(); }
 function initials(n) { return cleanName(n).split(/\s+/).filter(w=>w).slice(-2).map(w=>w[0].toUpperCase()).join("")||"?"; }
 function roleStyle(r) {
   const l = r.toLowerCase();
-  if (l.includes("mgr"))                              return "background:#fef3c7;color:#92400e;border:1px solid #fcd34d;font-weight:800;";
-  if (l.includes("supr")||l.includes("supervisor"))   return "background:#dbeafe;color:#1d4ed8;border:1px solid #93c5fd;font-weight:800;";
+  if (l.includes("mgr"))                             return "background:#fef3c7;color:#92400e;border:1px solid #fcd34d;font-weight:800;";
+  if (l.includes("supr")||l.includes("supervisor"))  return "background:#dbeafe;color:#1d4ed8;border:1px solid #93c5fd;font-weight:800;";
   return "";
 }
 
@@ -494,15 +481,13 @@ function personRow(p, m) {
   </div>`;
 }
 
-function leaveRow(p) {
+function leaveChip(p) {
   const lm  = LEAVE_META[p.st]||LEAVE_META.OFF;
   const ini = esc(initials(p.name));
   const nm  = esc(cleanName(p.name));
-  const rl  = esc(cleanRole(p.role));
-  const rHtml = rl ? `<span class="l-role">${rl}</span>` : "";
-  return `<div class="l-row">
+  return `<div class="l-chip">
     <div class="l-av" style="background:${lm.avBg};color:${lm.avTxt};">${ini}</div>
-    <span class="l-name">${nm}</span>${rHtml}
+    <span class="l-name">${nm}</span>
     <span class="l-pill" style="background:${lm.pillBg};color:${lm.pillTxt};">${esc(p.st)}</span>
   </div>`;
 }
@@ -524,24 +509,17 @@ function shiftCard(s, grouped) {
   </div>`;
 }
 
-function offCol(grouped) {
-  const people = grouped.OTHER||[];
-  if (!people.length) return "";
-  return `<div class="shift-card" id="card-other">
-    <div class="card-hdr">
-      <div class="hdr-accent" style="background:#64748b"></div>
-      <span class="hdr-lbl" style="font-size:14px;letter-spacing:1.5px;margin-left:6px;">OFF</span>
-      <span class="hdr-sub">Vắng mặt</span>
-      <span class="hdr-cnt">${people.length}</span>
-    </div>
-    <div class="card-body">${people.map(leaveRow).join("")}</div>
-  </div>`;
-}
-
 function render(grouped) {
+  // Date
   document.getElementById("day-name").textContent = DAY_NAME;
   document.getElementById("date-str").textContent = DATE_STR;
 
+  // Quote in topbar
+  const q = QUOTES[DAY_OF_YR % QUOTES.length];
+  const ql = document.getElementById("quote-line");
+  ql.innerHTML = `<em>${esc(q[0])}</em><span class="q-author">— ${esc(q[1])}</span>`;
+
+  // Stats
   const wc  = { C1:grouped.C1.length, C2:grouped.C2.length, C3:grouped.C3.length };
   const lc  = { ME:0, NP:0, HO:0, OFF:0 };
   (grouped.OTHER||[]).forEach(p => { if (p.st in lc) lc[p.st]++; });
@@ -549,29 +527,35 @@ function render(grouped) {
   const total   = working + lc.ME + lc.NP + lc.HO + lc.OFF;
   const counts  = { ...wc, ...lc, work:working, total };
 
-  const sr = document.getElementById("stats-row");
-  sr.innerHTML = STAT_CFG.map(s =>
+  document.getElementById("stats-row").innerHTML = STAT_CFG.map(s =>
     `<div class="stat-chip">
       <span class="n" style="color:${s.clr};">${counts[s.key]||0}</span>
       <span class="l">${s.lbl}</span>
     </div>`
   ).join("");
 
-  // Update theme button icon after DOM update
+  // Update theme btn
   const tBtn = document.getElementById("theme-btn");
   if (tBtn) tBtn.textContent = document.documentElement.getAttribute("data-theme") === "light" ? "☀️" : "🌙";
 
-  const hasOther = (grouped.OTHER||[]).length > 0;
+  // Shift cards (3 col, no OFF)
   const main = document.getElementById("main");
-  main.className = hasOther ? "has-other" : "";
-  main.innerHTML = shiftCard("C1",grouped) + shiftCard("C3",grouped) + shiftCard("C2",grouped) + offCol(grouped);
+  main.innerHTML = shiftCard("C1",grouped) + shiftCard("C3",grouped) + shiftCard("C2",grouped);
 
+  // OFF horizontal row
+  const offPeople = grouped.OTHER||[];
+  const offRow = document.getElementById("off-row");
+  if (offPeople.length) {
+    document.getElementById("off-cnt").textContent = offPeople.length;
+    document.getElementById("off-chips").innerHTML = offPeople.map(leaveChip).join("");
+    offRow.style.display = "block";
+  } else {
+    offRow.style.display = "none";
+  }
+
+  // Footer
   document.getElementById("footer").innerHTML =
     `Shift 1: ${SH_TIMES.C1} &nbsp;·&nbsp; Shift 2: ${SH_TIMES.C2} &nbsp;·&nbsp; Shift 3: ${SH_TIMES.C3} &nbsp;·&nbsp; All times <strong>${TZ_LBL}</strong> &nbsp;·&nbsp; TECH TEAM`;
-
-  const q = QUOTES[DAY_OF_YR % QUOTES.length];
-  document.getElementById("qt").textContent = q[0];
-  document.getElementById("qa").textContent = "— " + q[1];
 
   document.getElementById("loading").style.display = "none";
   document.getElementById("app").style.display = "block";
@@ -627,10 +611,10 @@ function copyImg() {
   msg.textContent = "";
 
   const reset = () => { btn.disabled = false; btn.textContent = "📋 Copy"; };
-  const flash = (t, ms) => { msg.textContent = t; setTimeout(()=> msg.textContent="", ms||4000); };
+  const flash = (t, ms) => { msg.textContent = t; setTimeout(()=>msg.textContent="", ms||4000); };
   const dl    = c => { const a=document.createElement("a"); a.href=c.toDataURL("image/png"); a.download="tech-shift.png"; a.click(); };
 
-  const glassEls = [...document.querySelectorAll(".shift-card,.stat-chip")];
+  const glassEls = [...document.querySelectorAll(".shift-card,.stat-chip,#off-row")];
   glassEls.forEach(el => { el.style.backdropFilter="none"; el.style.webkitBackdropFilter="none"; });
   const restore = () => glassEls.forEach(el => { el.style.backdropFilter=""; el.style.webkitBackdropFilter=""; });
 

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="vi">
+<html lang="vi" data-theme="dark">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
@@ -8,24 +8,94 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://unpkg.com/xlsx/dist/xlsx.full.min.js"></script>
 <style>
+/* ── TOKENS ───────────────────────────────────────────────────── */
+:root {
+  --bg:         #0c1322;
+  --bg-dot:     rgba(99,179,237,.08);
+  --card-bg:    rgba(14,26,60,.78);
+  --card-border:rgba(255,255,255,.09);
+  --card-inset: rgba(255,255,255,.05);
+  --card-shadow:0 8px 30px rgba(0,0,0,.45);
+  --hdr-bg:     rgba(255,255,255,.04);
+  --hdr-border: rgba(255,255,255,.08);
+  --row-bg:     rgba(255,255,255,.9);
+  --row-border: rgba(0,0,0,.04);
+  --row-name:   #0f172a;
+  --row-role:   #64748b;
+  --lv-bg:      rgba(255,255,255,.75);
+  --lv-name:    #475569;
+  --lv-role:    #94a3b8;
+  --txt:        #e2e8f0;
+  --txt2:       #94a3b8;
+  --txt3:       #475569;
+  --badge-bg:   rgba(255,255,255,.08);
+  --badge-bdr:  rgba(255,255,255,.12);
+  --empty:      rgba(255,255,255,.2);
+  --footer-bdr: rgba(255,255,255,.07);
+  --quote-bg:   linear-gradient(135deg,rgba(20,45,110,.55),rgba(10,22,60,.6));
+  --quote-bdr:  rgba(99,179,237,.22);
+  --topbar-bg:  linear-gradient(90deg,rgba(8,18,55,.98),rgba(18,45,130,.94));
+  --topbar-bdr: rgba(99,179,237,.18);
+  --stat-bg:    rgba(255,255,255,.1);
+  --stat-bdr:   rgba(255,255,255,.15);
+  --stat-lbl:   rgba(255,255,255,.7);
+  --btn-bg:     rgba(255,255,255,.1);
+  --btn-bdr:    rgba(255,255,255,.2);
+  --btn-txt:    #e0f2fe;
+}
+[data-theme="light"] {
+  --bg:         #eef2f9;
+  --bg-dot:     rgba(59,130,246,.05);
+  --card-bg:    rgba(255,255,255,.97);
+  --card-border:rgba(0,0,0,.08);
+  --card-inset: rgba(255,255,255,.6);
+  --card-shadow:0 2px 14px rgba(0,0,0,.09);
+  --hdr-bg:     rgba(0,0,0,.025);
+  --hdr-border: rgba(0,0,0,.07);
+  --row-bg:     #f8fafc;
+  --row-border: rgba(0,0,0,.07);
+  --row-name:   #0f172a;
+  --row-role:   #64748b;
+  --lv-bg:      #f1f5f9;
+  --lv-name:    #475569;
+  --lv-role:    #94a3b8;
+  --txt:        #0f172a;
+  --txt2:       #475569;
+  --txt3:       #94a3b8;
+  --badge-bg:   rgba(0,0,0,.05);
+  --badge-bdr:  rgba(0,0,0,.1);
+  --empty:      #cbd5e1;
+  --footer-bdr: rgba(0,0,0,.08);
+  --quote-bg:   linear-gradient(135deg,rgba(219,234,254,.6),rgba(239,246,255,.7));
+  --quote-bdr:  rgba(59,130,246,.18);
+  --topbar-bg:  linear-gradient(90deg,#1a3a8a,#2563eb);
+  --topbar-bdr: rgba(255,255,255,.12);
+  --stat-bg:    rgba(255,255,255,.18);
+  --stat-bdr:   rgba(255,255,255,.22);
+  --stat-lbl:   rgba(255,255,255,.8);
+  --btn-bg:     rgba(255,255,255,.15);
+  --btn-bdr:    rgba(255,255,255,.25);
+  --btn-txt:    #fff;
+}
+
+/* ── RESET ────────────────────────────────────────────────────── */
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-html{background:#0b1426}
+html{background:var(--bg)}
 body{
   font-family:'Plus Jakarta Sans',sans-serif;
-  background:#0b1426;
-  min-height:100vh;
-  position:relative;
-  color:#f1f5f9;
+  background:var(--bg);min-height:100vh;
+  position:relative;color:var(--txt);
+  transition:background .25s,color .25s;
 }
 body::before{
   content:'';position:absolute;inset:0;pointer-events:none;z-index:0;
-  background-image:radial-gradient(circle,rgba(99,179,237,.1) 1px,transparent 1px);
-  background-size:30px 30px;
+  background-image:radial-gradient(circle,var(--bg-dot) 1px,transparent 1px);
+  background-size:32px 32px;
 }
 
-/* LOADING */
+/* ── LOADING ──────────────────────────────────────────────────── */
 #loading{
-  position:fixed;inset:0;background:#0b1426;z-index:100;
+  position:fixed;inset:0;background:var(--bg);z-index:100;
   display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;
 }
 .spinner{
@@ -34,191 +104,201 @@ body::before{
   animation:spin .75s linear infinite;
 }
 @keyframes spin{to{transform:rotate(360deg)}}
-#loading p{color:#64748b;font-size:13px}
+#loading p{color:var(--txt3);font-size:13px}
 
-/* APP */
+/* ── APP ──────────────────────────────────────────────────────── */
 #app{display:none;position:relative;z-index:1}
 
-/* TOPBAR */
+/* ── TOPBAR ───────────────────────────────────────────────────── */
 #topbar{
-  display:flex;align-items:center;gap:10px;
+  display:flex;align-items:center;gap:8px;
   padding:8px 14px;
-  background:linear-gradient(90deg,rgba(15,32,87,.97),rgba(30,58,138,.92));
-  border-bottom:1px solid rgba(99,179,237,.18);
-  backdrop-filter:blur(10px);
-  -webkit-backdrop-filter:blur(10px);
+  background:var(--topbar-bg);
+  border-bottom:1px solid var(--topbar-bdr);
+  backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+  position:sticky;top:0;z-index:10;
 }
 #brand{display:flex;align-items:center;gap:7px;flex-shrink:0}
-#brand .dot{width:9px;height:9px;border-radius:50%;background:#22c55e;box-shadow:0 0 7px #22c55e}
-#brand span{font-family:'Outfit',sans-serif;font-size:13px;font-weight:900;color:#e0f2fe;letter-spacing:3px;text-transform:uppercase}
+.live-dot{
+  width:8px;height:8px;border-radius:50%;
+  background:#22c55e;box-shadow:0 0 8px #22c55e;
+  animation:pulse 2.2s ease infinite;
+}
+@keyframes pulse{0%,100%{opacity:1;box-shadow:0 0 8px #22c55e}50%{opacity:.35;box-shadow:0 0 3px #22c55e}}
+#brand span{
+  font-family:'Outfit',sans-serif;font-size:13px;font-weight:900;
+  color:#fff;letter-spacing:3px;text-transform:uppercase;
+}
 #date-block{flex:1;text-align:center}
-#day-name{font-family:'Outfit',sans-serif;font-size:22px;font-weight:900;color:#fff;line-height:1}
-#date-str{font-family:'Outfit',sans-serif;font-size:10px;color:#93c5fd;margin-top:1px;font-weight:700;letter-spacing:1px}
-#stats-row{display:flex;align-items:center;gap:5px;flex-shrink:0}
+#day-name{font-family:'Outfit',sans-serif;font-size:21px;font-weight:900;color:#fff;line-height:1}
+#date-str{font-size:10px;color:rgba(255,255,255,.7);margin-top:2px;font-weight:600;letter-spacing:.4px}
+#stats-row{display:flex;align-items:center;gap:4px;flex-shrink:0}
 .stat-chip{
   display:flex;flex-direction:column;align-items:center;
-  background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.11);
-  border-radius:8px;padding:3px 8px;min-width:32px;
+  background:var(--stat-bg);border:1px solid var(--stat-bdr);
+  border-radius:8px;padding:3px 7px;min-width:30px;
   backdrop-filter:blur(6px);
 }
-.stat-chip .n{font-family:'Outfit',sans-serif;font-size:15px;font-weight:900;line-height:1;text-shadow:0 0 10px currentColor}
-.stat-chip .l{font-size:8px;font-weight:700;margin-top:1px}
-#copy-btn{
-  padding:5px 12px;
-  background:rgba(255,255,255,.1);color:#e0f2fe;
-  border:1px solid rgba(99,179,237,.4);border-radius:7px;
+.stat-chip .n{font-family:'Outfit',sans-serif;font-size:14px;font-weight:900;line-height:1;text-shadow:0 0 10px currentColor}
+.stat-chip .l{font-size:8px;font-weight:700;margin-top:1px;color:var(--stat-lbl)}
+#actions{display:flex;align-items:center;gap:5px;flex-shrink:0}
+.t-btn{
+  height:30px;
+  background:var(--btn-bg);color:var(--btn-txt);
+  border:1px solid var(--btn-bdr);border-radius:7px;
   font-family:'Plus Jakarta Sans',sans-serif;font-size:11px;font-weight:700;
-  cursor:pointer;flex-shrink:0;
+  cursor:pointer;display:flex;align-items:center;justify-content:center;gap:4px;
+  transition:background .15s,opacity .15s;white-space:nowrap;
 }
-#copy-btn:disabled{opacity:.4;cursor:default}
-#refresh-btn{
-  width:28px;height:28px;
-  background:rgba(255,255,255,.07);color:#93c5fd;
-  border:1px solid rgba(99,179,237,.25);border-radius:7px;
-  font-size:14px;cursor:pointer;flex-shrink:0;
-  display:flex;align-items:center;justify-content:center;
-}
-#refresh-btn:disabled{opacity:.4;cursor:default}
-#status-msg{font-size:10px;color:#38bdf8;white-space:nowrap}
+.t-btn:hover:not(:disabled){background:rgba(255,255,255,.22)}
+.t-btn:disabled{opacity:.4;cursor:default}
+#copy-btn{padding:0 11px}
+#refresh-btn,#theme-btn{width:30px;font-size:14px}
+#status-msg{font-size:10px;color:rgba(255,255,255,.7);white-space:nowrap}
 
-/* GRID */
+/* ── GRID ─────────────────────────────────────────────────────── */
 #main{
-  display:grid;
-  grid-template-columns:1fr;
-  gap:8px;padding:10px 10px 0;
+  display:grid;grid-template-columns:1fr;
+  gap:10px;padding:12px 10px 0;
 }
 
-/* SHIFT CARD */
+/* ── SHIFT CARD ───────────────────────────────────────────────── */
 .shift-card{
-  border-radius:13px;overflow:hidden;
-  border:1px solid rgba(255,255,255,.1);
-  background:rgba(11,22,55,.6);
+  border-radius:14px;overflow:hidden;
+  border:1px solid var(--card-border);
+  background:var(--card-bg);
   backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
-  box-shadow:0 8px 28px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.07);
+  box-shadow:var(--card-shadow),inset 0 1px 0 var(--card-inset);
   display:flex;flex-direction:column;
 }
 .card-hdr{
-  padding:9px 13px;
-  display:flex;align-items:center;gap:8px;position:relative;
+  padding:10px 14px;
+  display:flex;align-items:center;gap:8px;
+  background:var(--hdr-bg);
+  border-bottom:1px solid var(--hdr-border);
+  position:relative;
 }
-.card-hdr::after{
-  content:'';position:absolute;bottom:0;left:0;right:0;
-  height:1px;background:rgba(255,255,255,.1);
+.hdr-accent{
+  position:absolute;left:0;top:0;bottom:0;width:4px;
 }
-.hdr-lbl{font-family:'Outfit',sans-serif;font-size:18px;font-weight:900;color:#fff;letter-spacing:1.5px}
-.hdr-sub{font-size:10px;font-weight:600;color:rgba(255,255,255,.65)}
-.hdr-time{font-size:9px;color:rgba(255,255,255,.5);margin-left:auto;text-align:right;line-height:1.4}
-.hdr-tz{font-size:8px;color:rgba(255,255,255,.3)}
+.hdr-lbl{
+  font-family:'Outfit',sans-serif;font-size:20px;font-weight:900;
+  color:var(--txt);letter-spacing:1px;margin-left:6px;
+}
+.hdr-sub{font-size:10px;font-weight:600;color:var(--txt2)}
+.hdr-time{font-size:9px;color:var(--txt3);margin-left:auto;text-align:right;line-height:1.5}
+.hdr-tz{font-size:8px;color:var(--txt3);opacity:.7}
 .hdr-cnt{
-  background:rgba(255,255,255,.2);border-radius:999px;
-  padding:2px 9px;font-family:'Outfit',sans-serif;
-  font-size:13px;font-weight:900;color:#fff;flex-shrink:0;
+  background:var(--badge-bg);border:1px solid var(--badge-bdr);
+  border-radius:999px;padding:2px 10px;
+  font-family:'Outfit',sans-serif;font-size:13px;font-weight:900;
+  color:var(--txt);flex-shrink:0;
 }
-.card-body{padding:7px 10px 9px;display:flex;flex-direction:column;gap:3px}
+.card-body{padding:8px 10px 10px;display:flex;flex-direction:column;gap:4px}
 
-/* PERSON ROW */
+/* ── PERSON ROW ───────────────────────────────────────────────── */
 .p-row{
-  display:flex;align-items:center;gap:7px;
-  padding:5px 9px;border-radius:8px;
-  background:rgba(255,255,255,.92);
-  border:1px solid rgba(0,0,0,.04);
+  display:flex;align-items:center;gap:8px;
+  padding:6px 10px;border-radius:9px;
+  background:var(--row-bg);
+  border:1px solid var(--row-border);
 }
-.p-dot{width:7px;height:7px;border-radius:50%;background:#22c55e;box-shadow:0 0 5px #22c55e;flex-shrink:0}
+.p-dot{width:6px;height:6px;border-radius:50%;background:#22c55e;box-shadow:0 0 5px #22c55e;flex-shrink:0}
 .p-av{
-  width:26px;height:26px;border-radius:50%;
+  width:28px;height:28px;border-radius:50%;
   display:flex;align-items:center;justify-content:center;
-  font-size:8px;font-weight:900;flex-shrink:0;
+  font-family:'Outfit',sans-serif;font-size:9px;font-weight:900;flex-shrink:0;
 }
-.p-name{font-size:13px;font-weight:800;color:#0f172a;flex:1}
-.p-role{font-size:10px;font-weight:600;color:#64748b;white-space:nowrap}
-.p-badge{padding:1px 5px;border-radius:4px;border-width:1px;border-style:solid;font-size:10px;font-weight:800}
+.p-name{font-size:13px;font-weight:800;color:var(--row-name);flex:1}
+.p-role{font-size:10px;font-weight:600;color:var(--row-role);white-space:nowrap}
+.p-badge{padding:1px 6px;border-radius:5px;border-width:1px;border-style:solid;font-size:9px;font-weight:800}
 
-/* LEAVE ROW */
+/* ── LEAVE ROW ────────────────────────────────────────────────── */
 .l-row{
-  display:flex;align-items:center;gap:6px;
-  padding:4px 7px;border-radius:6px;
-  background:rgba(255,255,255,.78);
+  display:flex;align-items:center;gap:7px;
+  padding:5px 8px;border-radius:7px;
+  background:var(--lv-bg);
+  border:1px solid var(--card-border);
   overflow:hidden;min-width:0;
 }
 .l-av{
-  width:20px;height:20px;border-radius:50%;
+  width:22px;height:22px;border-radius:50%;
   display:flex;align-items:center;justify-content:center;
-  font-size:7px;font-weight:900;flex-shrink:0;opacity:.65;
+  font-family:'Outfit',sans-serif;font-size:7px;font-weight:900;flex-shrink:0;opacity:.7;
 }
-.l-name{font-size:11px;font-weight:700;color:#475569;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;flex-shrink:1}
-.l-role{font-size:9px;color:#94a3b8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;flex:1}
-.l-pill{font-size:8px;font-weight:800;padding:1px 6px;border-radius:999px;letter-spacing:.3px;flex-shrink:0}
-.empty-row{font-size:11px;color:rgba(255,255,255,.2);padding:5px 0;text-align:center}
+.l-name{font-size:11px;font-weight:700;color:var(--lv-name);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;flex-shrink:1}
+.l-role{font-size:9px;color:var(--lv-role);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;flex:1}
+.l-pill{font-size:8px;font-weight:800;padding:2px 7px;border-radius:999px;letter-spacing:.3px;flex-shrink:0}
+.empty-row{font-size:11px;color:var(--empty);padding:8px 0;text-align:center}
 
-/* FOOTER */
-#footer{display:none;text-align:center;margin-top:8px;padding:8px 0 2px;border-top:1px solid rgba(255,255,255,.07);font-size:12px;color:#94a3b8;letter-spacing:.5px;font-weight:600}
-#footer strong{color:#93c5fd;font-weight:800}
+/* ── FOOTER ───────────────────────────────────────────────────── */
+#footer{display:none;text-align:center;margin-top:10px;padding:9px 0 3px;border-top:1px solid var(--footer-bdr);font-size:11px;color:var(--txt3);letter-spacing:.5px;font-weight:600}
+#footer strong{color:#60a5fa;font-weight:800}
 
-/* QUOTE */
+/* ── QUOTE ────────────────────────────────────────────────────── */
 #quote-bar{
   position:relative;overflow:hidden;
-  margin:10px 10px 8px;padding:11px 18px;
-  background:linear-gradient(135deg,rgba(30,58,138,.5),rgba(15,32,87,.55));
-  border:1px solid rgba(99,179,237,.28);border-radius:11px;
-  box-shadow:inset 0 0 0 1px rgba(99,179,237,.06),0 4px 16px rgba(0,0,0,.28);
-  display:flex;align-items:center;gap:9px;text-align:center;
+  margin:12px 10px 10px;padding:12px 20px;
+  background:var(--quote-bg);
+  border:1px solid var(--quote-bdr);border-radius:12px;
+  display:flex;align-items:center;gap:10px;text-align:center;
 }
 #quote-bar::before{
   content:'';position:absolute;top:0;left:0;right:0;height:2px;
   background:linear-gradient(90deg,transparent,#3b82f6,#60a5fa,#3b82f6,transparent);
 }
-.qm{font-family:'Outfit',sans-serif;font-weight:900;color:rgba(96,165,250,.38);font-size:28px;line-height:.8;flex-shrink:0}
+.qm{font-family:'Outfit',sans-serif;font-weight:900;color:rgba(96,165,250,.28);font-size:30px;line-height:.8;flex-shrink:0}
 .qm-l{align-self:flex-start}.qm-r{align-self:flex-end}
-#qt{font-size:12px;color:#e2e8f0;font-style:italic;line-height:1.5;font-weight:500}
-#qa{font-size:10px;color:#60a5fa;font-weight:800;letter-spacing:1px;text-transform:uppercase;margin-top:3px}
+#qt{font-size:12px;color:var(--txt);font-style:italic;line-height:1.6;font-weight:500}
+#qa{font-size:10px;color:#60a5fa;font-weight:700;letter-spacing:.8px;text-transform:uppercase;margin-top:4px}
 
-/* DESKTOP */
+/* ── DESKTOP ──────────────────────────────────────────────────── */
 @media(min-width:900px){
-  #topbar{padding:10px 22px}
+  #topbar{padding:10px 22px;gap:10px}
   #brand span{font-size:15px}
-  #day-name{font-size:30px}
-  #date-str{font-size:12px}
-  .stat-chip{padding:4px 11px;min-width:44px;border-radius:9px}
-  .stat-chip .n{font-size:18px}
+  #day-name{font-size:28px}
+  #date-str{font-size:11px}
+  .stat-chip{padding:4px 10px;min-width:42px;border-radius:9px}
+  .stat-chip .n{font-size:17px}
   .stat-chip .l{font-size:9px}
-  #stats-row{gap:6px}
-  #copy-btn{font-size:12px;padding:7px 16px}
-  #refresh-btn{width:32px;height:32px}
+  #stats-row{gap:5px}
+  .t-btn{height:34px}
+  #copy-btn{padding:0 15px;font-size:12px}
+  #refresh-btn,#theme-btn{width:34px;font-size:15px}
   #status-msg{font-size:11px}
 
-  #main{grid-template-columns:1fr 1fr 1fr;gap:11px;padding:12px 18px 0}
+  #main{grid-template-columns:1fr 1fr 1fr;gap:12px;padding:14px 20px 0}
   #main.has-other{grid-template-columns:1fr 1fr 1fr 210px}
-  #card-c2{margin-left:14px}
+  #card-c2{margin-left:12px}
   #main.has-other #card-c2{margin-left:0}
 
-  .shift-card{border-radius:15px}
-  .card-hdr{padding:11px 15px}
-  .hdr-lbl{font-size:21px}
-  .hdr-sub{font-size:12px}
+  .shift-card{border-radius:16px}
+  .card-hdr{padding:12px 16px}
+  .hdr-lbl{font-size:22px;margin-left:8px}
+  .hdr-sub{font-size:11px}
   .hdr-time{font-size:10px}
   .hdr-tz{font-size:9px}
-  .hdr-cnt{font-size:14px;padding:3px 11px}
-  .card-body{padding:9px 12px 11px;gap:5px}
+  .hdr-cnt{font-size:14px;padding:3px 12px}
+  .card-body{padding:10px 12px 12px;gap:5px}
 
-  .p-row{padding:6px 11px;border-radius:9px;gap:9px}
+  .p-row{padding:7px 12px;border-radius:10px;gap:10px}
   .p-av{width:32px;height:32px;font-size:10px}
-  .p-dot{width:8px;height:8px}
-  .p-name{font-size:15px}
+  .p-dot{width:7px;height:7px}
+  .p-name{font-size:14px}
   .p-role{font-size:11px}
 
-  .l-row{gap:7px;padding:4px 8px}
-  .l-av{width:22px;height:22px;font-size:7px}
+  .l-row{gap:8px;padding:5px 9px}
+  .l-av{width:24px;height:24px}
   .l-name{font-size:12px}
   .l-role{font-size:9px}
-  .l-pill{font-size:9px;padding:1px 7px}
+  .l-pill{font-size:9px;padding:2px 8px}
 
   #card-other .card-body{padding:6px 10px 8px;gap:3px}
-
   #footer{display:block}
-  #quote-bar{margin:12px 18px 10px;padding:12px 26px}
-  .qm{font-size:36px}
-  #qt{font-size:14px}
-  #qa{font-size:11px;letter-spacing:1.5px}
+  #quote-bar{margin:14px 20px 12px;padding:14px 28px}
+  .qm{font-size:38px}
+  #qt{font-size:13px}
+  #qa{font-size:11px}
 }
 </style>
 </head>
@@ -232,7 +312,7 @@ body::before{
 <div id="app">
   <div id="topbar">
     <div id="brand">
-      <div class="dot"></div>
+      <div class="live-dot"></div>
       <span>Tech Support</span>
     </div>
     <div id="date-block">
@@ -240,6 +320,12 @@ body::before{
       <div id="date-str"></div>
     </div>
     <div id="stats-row"></div>
+    <div id="actions">
+      <button id="copy-btn" class="t-btn" onclick="copyImg()">📋 Copy</button>
+      <button id="refresh-btn" class="t-btn" onclick="loadData()" title="Refresh">↻</button>
+      <button id="theme-btn" class="t-btn" onclick="toggleTheme()" title="Đổi theme">🌙</button>
+      <span id="status-msg"></span>
+    </div>
   </div>
   <div id="main"></div>
   <div id="footer"></div>
@@ -254,15 +340,40 @@ body::before{
 </div>
 
 <script>
+/* ── THEME ─────────────────────────────────────────────────────── */
+(function(){
+  try {
+    const t = localStorage.getItem("theme");
+    if (t === "light" || t === "dark") {
+      document.documentElement.setAttribute("data-theme", t);
+    }
+  } catch(e){}
+})();
+
+function toggleTheme() {
+  const html = document.documentElement;
+  const next = html.getAttribute("data-theme") === "dark" ? "light" : "dark";
+  html.setAttribute("data-theme", next);
+  document.getElementById("theme-btn").textContent = next === "dark" ? "🌙" : "☀️";
+  try { localStorage.setItem("theme", next); } catch(e){}
+}
+
+(function(){
+  const t = document.documentElement.getAttribute("data-theme");
+  const btn = document.getElementById("theme-btn");
+  if (btn) btn.textContent = t === "light" ? "☀️" : "🌙";
+})();
+
+/* ── CONFIG ────────────────────────────────────────────────────── */
 const SP_URL     = "https://lichtech.quang-vo.workers.dev";
 const FILTER_TAB = "Filter";
 const WORK       = { C1:1, C2:1, C3:1 };
 const LEAVE      = { OFF:1, ME:1, NP:1, HO:1 };
 
 const SHIFT_META = {
-  C1:{ grad:"#1d4ed8,#3b82f6", avBg:"#dbeafe", avTxt:"#1d4ed8" },
-  C2:{ grad:"#b45309,#f97316", avBg:"#ffedd5", avTxt:"#b45309" },
-  C3:{ grad:"#15803d,#22c55e", avBg:"#dcfce7", avTxt:"#15803d" },
+  C1:{ accent:"#3b82f6", avBg:"#dbeafe", avTxt:"#1d4ed8" },
+  C2:{ accent:"#f97316", avBg:"#ffedd5", avTxt:"#b45309" },
+  C3:{ accent:"#22c55e", avBg:"#dcfce7", avTxt:"#15803d" },
 };
 const LEAVE_META = {
   OFF:{ avBg:"#e2e8f0", avTxt:"#475569", pillBg:"#e2e8f0", pillTxt:"#475569" },
@@ -315,7 +426,7 @@ const QUOTES = [
   ["If you do what you always did, you will get what you always got.","Albert Einstein"],
 ];
 
-// ── DATE (US Central) ──────────────────────────────────────────
+/* ── DATE (US Central) ─────────────────────────────────────────── */
 const _now = new Date();
 const _tz  = "America/Chicago";
 const _fmt = o => _now.toLocaleDateString("en-US", { timeZone:_tz, ...o });
@@ -337,7 +448,7 @@ function centralOffset(y, m, d) {
   else                      dst = d <  nthSun(y, 11, 1);
   return dst ? { off:-5, lbl:"CDT (UTC−5)" } : { off:-6, lbl:"CST (UTC−6)" };
 }
-const _ct   = centralOffset(_Y, _M, _D);
+const _ct    = centralOffset(_Y, _M, _D);
 const TZ_LBL = _ct.lbl;
 const LOC_OFF = _ct.off;
 const DAY_OF_YR = Math.ceil((new Date(_Y,_M-1,_D) - new Date(_Y,0,0)) / 86400000);
@@ -354,7 +465,7 @@ const SH_TIMES = {
   C3: fmtH(vnToLocal(22)) + " – " + fmtH(vnToLocal(5)),
 };
 
-// ── HELPERS ────────────────────────────────────────────────────
+/* ── HELPERS ───────────────────────────────────────────────────── */
 function esc(s) {
   return String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":'&#39;'})[c]);
 }
@@ -368,7 +479,7 @@ function roleStyle(r) {
   return "";
 }
 
-// ── RENDER HELPERS ─────────────────────────────────────────────
+/* ── RENDER ────────────────────────────────────────────────────── */
 function personRow(p, m) {
   const ini  = esc(initials(p.name));
   const name = esc(cleanName(p.name));
@@ -402,7 +513,8 @@ function shiftCard(s, grouped) {
   const idAttr = s==="C2" ? ' id="card-c2"' : s==="C3" ? ' id="card-c3"' : '';
   const body = people.length ? people.map(p=>personRow(p,m)).join("") : '<div class="empty-row">—</div>';
   return `<div class="shift-card"${idAttr}>
-    <div class="card-hdr" style="background:linear-gradient(135deg,${m.grad});">
+    <div class="card-hdr">
+      <div class="hdr-accent" style="background:${m.accent}"></div>
       <span class="hdr-lbl">${s}</span>
       <span class="hdr-sub">Shift ${s.slice(1)}</span>
       <span class="hdr-time">${SH_TIMES[s]}<br><span class="hdr-tz">${TZ_LBL}</span></span>
@@ -416,8 +528,9 @@ function offCol(grouped) {
   const people = grouped.OTHER||[];
   if (!people.length) return "";
   return `<div class="shift-card" id="card-other">
-    <div class="card-hdr" style="background:linear-gradient(135deg,#1e293b,#334155);">
-      <span class="hdr-lbl" style="font-size:14px;letter-spacing:1px;">OFF</span>
+    <div class="card-hdr">
+      <div class="hdr-accent" style="background:#64748b"></div>
+      <span class="hdr-lbl" style="font-size:14px;letter-spacing:1.5px;margin-left:6px;">OFF</span>
       <span class="hdr-sub">Vắng mặt</span>
       <span class="hdr-cnt">${people.length}</span>
     </div>
@@ -425,7 +538,6 @@ function offCol(grouped) {
   </div>`;
 }
 
-// ── RENDER ─────────────────────────────────────────────────────
 function render(grouped) {
   document.getElementById("day-name").textContent = DAY_NAME;
   document.getElementById("date-str").textContent = DATE_STR;
@@ -437,29 +549,26 @@ function render(grouped) {
   const total   = working + lc.ME + lc.NP + lc.HO + lc.OFF;
   const counts  = { ...wc, ...lc, work:working, total };
 
-  // build stats row
   const sr = document.getElementById("stats-row");
   sr.innerHTML = STAT_CFG.map(s =>
     `<div class="stat-chip">
-      <span class="n" id="${s.id}" style="color:${s.clr};">${counts[s.key]||0}</span>
-      <span class="l" style="color:${s.clr};">${s.lbl}</span>
+      <span class="n" style="color:${s.clr};">${counts[s.key]||0}</span>
+      <span class="l">${s.lbl}</span>
     </div>`
-  ).join("") +
-  `<button id="copy-btn" onclick="copyImg()">📋 Copy</button>
-   <button id="refresh-btn" onclick="loadData()" title="Refresh">↻</button>
-   <span id="status-msg"></span>`;
+  ).join("");
 
-  // main grid
+  // Update theme button icon after DOM update
+  const tBtn = document.getElementById("theme-btn");
+  if (tBtn) tBtn.textContent = document.documentElement.getAttribute("data-theme") === "light" ? "☀️" : "🌙";
+
   const hasOther = (grouped.OTHER||[]).length > 0;
   const main = document.getElementById("main");
   main.className = hasOther ? "has-other" : "";
   main.innerHTML = shiftCard("C1",grouped) + shiftCard("C3",grouped) + shiftCard("C2",grouped) + offCol(grouped);
 
-  // footer
   document.getElementById("footer").innerHTML =
     `Shift 1: ${SH_TIMES.C1} &nbsp;·&nbsp; Shift 2: ${SH_TIMES.C2} &nbsp;·&nbsp; Shift 3: ${SH_TIMES.C3} &nbsp;·&nbsp; All times <strong>${TZ_LBL}</strong> &nbsp;·&nbsp; TECH TEAM`;
 
-  // quote
   const q = QUOTES[DAY_OF_YR % QUOTES.length];
   document.getElementById("qt").textContent = q[0];
   document.getElementById("qa").textContent = "— " + q[1];
@@ -468,7 +577,7 @@ function render(grouped) {
   document.getElementById("app").style.display = "block";
 }
 
-// ── FETCH & PARSE ──────────────────────────────────────────────
+/* ── FETCH ─────────────────────────────────────────────────────── */
 async function loadData() {
   const loadEl = document.getElementById("loading");
   const appEl  = document.getElementById("app");
@@ -490,9 +599,9 @@ async function loadData() {
 
     for (let i = 2; i < rows.length; i++) {
       const row    = rows[i];
-      const name   = String(row[1]||"").trim();   // col B
-      const role   = String(row[2]||"").trim();   // col C
-      const status = norm(row[3]);                 // col D
+      const name   = String(row[1]||"").trim();
+      const role   = String(row[2]||"").trim();
+      const status = norm(row[3]);
       if (!name || /[0-9:\/]/.test(name)) continue;
       if (WORK[status])       grouped[status].push({ name, role });
       else if (LEAVE[status]) grouped.OTHER.push({ name, role, st:status });
@@ -504,16 +613,12 @@ async function loadData() {
         <div style="font-size:36px;margin-bottom:14px">⚠️</div>
         <div style="color:#f87171;font-size:15px;font-weight:700;margin-bottom:8px">Không thể tải dữ liệu</div>
         <div style="color:#64748b;font-size:13px;line-height:1.7;margin-bottom:16px">${esc(err.message)}</div>
-        ${err.message.toLowerCase().includes("cors")||err.message.toLowerCase().includes("fetch")||err.message.toLowerCase().includes("failed")
-          ? `<div style="color:#fbbf24;font-size:12px;background:rgba(251,191,36,.08);border:1px solid rgba(251,191,36,.2);border-radius:8px;padding:10px 14px;line-height:1.6;margin-bottom:14px">
-              🔒 Lỗi CORS — SharePoint không cho phép đọc từ domain này.<br>Cần cấu hình proxy. Liên hệ admin.
-            </div>` : ""}
         <button onclick="loadData()" style="padding:7px 18px;background:rgba(59,130,246,.15);color:#60a5fa;border:1px solid rgba(59,130,246,.3);border-radius:7px;font-size:12px;font-weight:700;cursor:pointer">↻ Thử lại</button>
       </div>`;
   }
 }
 
-// ── COPY IMAGE ─────────────────────────────────────────────────
+/* ── COPY ──────────────────────────────────────────────────────── */
 function copyImg() {
   const btn = document.getElementById("copy-btn");
   const msg = document.getElementById("status-msg");
@@ -534,8 +639,9 @@ function copyImg() {
       const W = document.body.scrollWidth;
       const H = document.body.scrollHeight;
       const scale = Math.max(1.25, Math.min(2, 1920/W));
+      const bg = document.documentElement.getAttribute("data-theme") === "light" ? "#eef2f9" : "#0c1322";
       return html2canvas(document.body, {
-        scale, useCORS:true, backgroundColor:"#0b1426",
+        scale, useCORS:true, backgroundColor:bg,
         logging:false, imageTimeout:0, windowWidth:W, windowHeight:H
       });
     })

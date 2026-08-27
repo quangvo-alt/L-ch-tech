@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Tech Shift Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://unpkg.com/xlsx/dist/xlsx.full.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{background:#0b1426}
+body{
+  font-family:'Plus Jakarta Sans',sans-serif;
+  background:#0b1426;
+  min-height:100vh;
+  position:relative;
+  color:#f1f5f9;
+}
+body::before{
+  content:'';position:absolute;inset:0;pointer-events:none;z-index:0;
+  background-image:radial-gradient(circle,rgba(99,179,237,.1) 1px,transparent 1px);
+  background-size:30px 30px;
+}
+
+/* LOADING */
+#loading{
+  position:fixed;inset:0;background:#0b1426;z-index:100;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;
+}
+.spinner{
+  width:36px;height:36px;border-radius:50%;
+  border:3px solid rgba(59,130,246,.2);border-top-color:#3b82f6;
+  animation:spin .75s linear infinite;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+#loading p{color:#64748b;font-size:13px}
+
+/* APP */
+#app{display:none;position:relative;z-index:1}
+
+/* TOPBAR */
+#topbar{
+  display:flex;align-items:center;gap:10px;
+  padding:8px 14px;
+  background:linear-gradient(90deg,rgba(15,32,87,.97),rgba(30,58,138,.92));
+  border-bottom:1px solid rgba(99,179,237,.18);
+  backdrop-filter:blur(10px);
+  -webkit-backdrop-filter:blur(10px);
+}
+#brand{display:flex;align-items:center;gap:7px;flex-shrink:0}
+#brand .dot{width:9px;height:9px;border-radius:50%;background:#22c55e;box-shadow:0 0 7px #22c55e}
+#brand span{font-family:'Outfit',sans-serif;font-size:13px;font-weight:900;color:#e0f2fe;letter-spacing:3px;text-transform:uppercase}
+#date-block{flex:1;text-align:center}
+#day-name{font-family:'Outfit',sans-serif;font-size:22px;font-weight:900;color:#fff;line-height:1}
+#date-str{font-family:'Outfit',sans-serif;font-size:10px;color:#93c5fd;margin-top:1px;font-weight:700;letter-spacing:1px}
+#stats-row{display:flex;align-items:center;gap:5px;flex-shrink:0}
+.stat-chip{
+  display:flex;flex-direction:column;align-items:center;
+  background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.11);
+  border-radius:8px;padding:3px 8px;min-width:32px;
+  backdrop-filter:blur(6px);
+}
+.stat-chip .n{font-family:'Outfit',sans-serif;font-size:15px;font-weight:900;line-height:1;text-shadow:0 0 10px currentColor}
+.stat-chip .l{font-size:8px;font-weight:700;margin-top:1px}
+#copy-btn{
+  padding:5px 12px;
+  background:rgba(255,255,255,.1);color:#e0f2fe;
+  border:1px solid rgba(99,179,237,.4);border-radius:7px;
+  font-family:'Plus Jakarta Sans',sans-serif;font-size:11px;font-weight:700;
+  cursor:pointer;flex-shrink:0;
+}
+#copy-btn:disabled{opacity:.4;cursor:default}
+#refresh-btn{
+  width:28px;height:28px;
+  background:rgba(255,255,255,.07);color:#93c5fd;
+  border:1px solid rgba(99,179,237,.25);border-radius:7px;
+  font-size:14px;cursor:pointer;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+}
+#refresh-btn:disabled{opacity:.4;cursor:default}
+#status-msg{font-size:10px;color:#38bdf8;white-space:nowrap}
+
+/* GRID */
+#main{
+  display:grid;
+  grid-template-columns:1fr;
+  gap:8px;padding:10px 10px 0;
+}
+
+/* SHIFT CARD */
+.shift-card{
+  border-radius:13px;overflow:hidden;
+  border:1px solid rgba(255,255,255,.1);
+  background:rgba(11,22,55,.6);
+  backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+  box-shadow:0 8px 28px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.07);
+  display:flex;flex-direction:column;
+}
+.card-hdr{
+  padding:9px 13px;
+  display:flex;align-items:center;gap:8px;position:relative;
+}
+.card-hdr::after{
+  content:'';position:absolute;bottom:0;left:0;right:0;
+  height:1px;background:rgba(255,255,255,.1);
+}
+.hdr-lbl{font-family:'Outfit',sans-serif;font-size:18px;font-weight:900;color:#fff;letter-spacing:1.5px}
+.hdr-sub{font-size:10px;font-weight:600;color:rgba(255,255,255,.65)}
+.hdr-time{font-size:9px;color:rgba(255,255,255,.5);margin-left:auto;text-align:right;line-height:1.4}
+.hdr-tz{font-size:8px;color:rgba(255,255,255,.3)}
+.hdr-cnt{
+  background:rgba(255,255,255,.2);border-radius:999px;
+  padding:2px 9px;font-family:'Outfit',sans-serif;
+  font-size:13px;font-weight:900;color:#fff;flex-shrink:0;
+}
+.card-body{padding:7px 10px 9px;display:flex;flex-direction:column;gap:3px}
+
+/* PERSON ROW */
+.p-row{
+  display:flex;align-items:center;gap:7px;
+  padding:5px 9px;border-radius:8px;
+  background:rgba(255,255,255,.92);
+  border:1px solid rgba(0,0,0,.04);
+}
+.p-dot{width:7px;height:7px;border-radius:50%;background:#22c55e;box-shadow:0 0 5px #22c55e;flex-shrink:0}
+.p-av{
+  width:26px;height:26px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:8px;font-weight:900;flex-shrink:0;
+}
+.p-name{font-size:13px;font-weight:800;color:#0f172a;flex:1}
+.p-role{font-size:10px;font-weight:600;color:#64748b;white-space:nowrap}
+.p-badge{padding:1px 5px;border-radius:4px;border-width:1px;border-style:solid;font-size:10px;font-weight:800}
+
+/* LEAVE ROW */
+.l-row{
+  display:flex;align-items:center;gap:6px;
+  padding:4px 7px;border-radius:6px;
+  background:rgba(255,255,255,.78);
+  overflow:hidden;min-width:0;
+}
+.l-av{
+  width:20px;height:20px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:7px;font-weight:900;flex-shrink:0;opacity:.65;
+}
+.l-name{font-size:11px;font-weight:700;color:#475569;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;flex-shrink:1}
+.l-role{font-size:9px;color:#94a3b8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;flex:1}
+.l-pill{font-size:8px;font-weight:800;padding:1px 6px;border-radius:999px;letter-spacing:.3px;flex-shrink:0}
+.empty-row{font-size:11px;color:rgba(255,255,255,.2);padding:5px 0;text-align:center}
+
+/* FOOTER */
+#footer{display:none;text-align:center;margin-top:8px;padding:8px 0 2px;border-top:1px solid rgba(255,255,255,.07);font-size:12px;color:#94a3b8;letter-spacing:.5px;font-weight:600}
+#footer strong{color:#93c5fd;font-weight:800}
+
+/* QUOTE */
+#quote-bar{
+  position:relative;overflow:hidden;
+  margin:10px 10px 8px;padding:11px 18px;
+  background:linear-gradient(135deg,rgba(30,58,138,.5),rgba(15,32,87,.55));
+  border:1px solid rgba(99,179,237,.28);border-radius:11px;
+  box-shadow:inset 0 0 0 1px rgba(99,179,237,.06),0 4px 16px rgba(0,0,0,.28);
+  display:flex;align-items:center;gap:9px;text-align:center;
+}
+#quote-bar::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,transparent,#3b82f6,#60a5fa,#3b82f6,transparent);
+}
+.qm{font-family:'Outfit',sans-serif;font-weight:900;color:rgba(96,165,250,.38);font-size:28px;line-height:.8;flex-shrink:0}
+.qm-l{align-self:flex-start}.qm-r{align-self:flex-end}
+#qt{font-size:12px;color:#e2e8f0;font-style:italic;line-height:1.5;font-weight:500}
+#qa{font-size:10px;color:#60a5fa;font-weight:800;letter-spacing:1px;text-transform:uppercase;margin-top:3px}
+
+/* DESKTOP */
+@media(min-width:900px){
+  #topbar{padding:10px 22px}
+  #brand span{font-size:15px}
+  #day-name{font-size:30px}
+  #date-str{font-size:12px}
+  .stat-chip{padding:4px 11px;min-width:44px;border-radius:9px}
+  .stat-chip .n{font-size:18px}
+  .stat-chip .l{font-size:9px}
+  #stats-row{gap:6px}
+  #copy-btn{font-size:12px;padding:7px 16px}
+  #refresh-btn{width:32px;height:32px}
+  #status-msg{font-size:11px}
+
+  #main{grid-template-columns:1fr 1fr 1fr;gap:11px;padding:12px 18px 0}
+  #main.has-other{grid-template-columns:1fr 1fr 1fr 210px}
+  #card-c2{margin-left:14px}
+  #main.has-other #card-c2{margin-left:0}
+
+  .shift-card{border-radius:15px}
+  .card-hdr{padding:11px 15px}
+  .hdr-lbl{font-size:21px}
+  .hdr-sub{font-size:12px}
+  .hdr-time{font-size:10px}
+  .hdr-tz{font-size:9px}
+  .hdr-cnt{font-size:14px;padding:3px 11px}
+  .card-body{padding:9px 12px 11px;gap:5px}
+
+  .p-row{padding:6px 11px;border-radius:9px;gap:9px}
+  .p-av{width:32px;height:32px;font-size:10px}
+  .p-dot{width:8px;height:8px}
+  .p-name{font-size:15px}
+  .p-role{font-size:11px}
+
+  .l-row{gap:7px;padding:4px 8px}
+  .l-av{width:22px;height:22px;font-size:7px}
+  .l-name{font-size:12px}
+  .l-role{font-size:9px}
+  .l-pill{font-size:9px;padding:1px 7px}
+
+  #card-other .card-body{padding:6px 10px 8px;gap:3px}
+
+  #footer{display:block}
+  #quote-bar{margin:12px 18px 10px;padding:12px 26px}
+  .qm{font-size:36px}
+  #qt{font-size:14px}
+  #qa{font-size:11px;letter-spacing:1.5px}
+}
+</style>
+</head>
+<body>
+
+<div id="loading">
+  <div class="spinner"></div>
+  <p>Đang tải dữ liệu…</p>
+</div>
+
+<div id="app">
+  <div id="topbar">
+    <div id="brand">
+      <div class="dot"></div>
+      <span>Tech Support</span>
+    </div>
+    <div id="date-block">
+      <div id="day-name"></div>
+      <div id="date-str"></div>
+    </div>
+    <div id="stats-row"></div>
+  </div>
+  <div id="main"></div>
+  <div id="footer"></div>
+  <div id="quote-bar">
+    <span class="qm qm-l">&ldquo;</span>
+    <div style="flex:1;display:flex;flex-direction:column;align-items:center">
+      <div id="qt"></div>
+      <div id="qa"></div>
+    </div>
+    <span class="qm qm-r">&rdquo;</span>
+  </div>
+</div>
+
+<script>
+const SP_URL     = "https://mailserver02-my.sharepoint.com/:x:/g/personal/quang_vo_macusaone_com/IQD6dYl3Iq8gSqmLzwJr54SFAUxbGkQ6nwH0TMb3FTpj6Js?e=f023Mt";
+const FILTER_TAB = "Filter";
+const WORK       = { C1:1, C2:1, C3:1 };
+const LEAVE      = { OFF:1, ME:1, NP:1, HO:1 };
+
+const SHIFT_META = {
+  C1:{ grad:"#1d4ed8,#3b82f6", avBg:"#dbeafe", avTxt:"#1d4ed8" },
+  C2:{ grad:"#b45309,#f97316", avBg:"#ffedd5", avTxt:"#b45309" },
+  C3:{ grad:"#15803d,#22c55e", avBg:"#dcfce7", avTxt:"#15803d" },
+};
+const LEAVE_META = {
+  OFF:{ avBg:"#e2e8f0", avTxt:"#475569", pillBg:"#e2e8f0", pillTxt:"#475569" },
+  ME: { avBg:"#dbeafe", avTxt:"#1d4ed8", pillBg:"#dbeafe", pillTxt:"#1d4ed8" },
+  NP: { avBg:"#fef3c7", avTxt:"#92400e", pillBg:"#fde68a", pillTxt:"#92400e" },
+  HO: { avBg:"#fee2e2", avTxt:"#991b1b", pillBg:"#fecaca", pillTxt:"#991b1b" },
+};
+const STAT_CFG = [
+  { id:"sw",  key:"work",  lbl:"Work",  clr:"#4ade80" },
+  { id:"sc1", key:"C1",    lbl:"C1",    clr:"#60a5fa" },
+  { id:"sc2", key:"C2",    lbl:"C2",    clr:"#fb923c" },
+  { id:"sc3", key:"C3",    lbl:"C3",    clr:"#4ade80" },
+  { id:"sme", key:"ME",    lbl:"ME",    clr:"#a78bfa" },
+  { id:"snp", key:"NP",    lbl:"NP",    clr:"#fbbf24" },
+  { id:"sho", key:"HO",    lbl:"HO",    clr:"#f87171" },
+  { id:"sof", key:"OFF",   lbl:"OFF",   clr:"#94a3b8" },
+  { id:"st",  key:"total", lbl:"Total", clr:"#fbbf24" },
+];
+const QUOTES = [
+  ["The only way to do great work is to love what you do.","Steve Jobs"],
+  ["Success is not final, failure is not fatal: it is the courage to continue that counts.","Winston Churchill"],
+  ["Believe you can and you're halfway there.","Theodore Roosevelt"],
+  ["It does not matter how slowly you go as long as you do not stop.","Confucius"],
+  ["Hard work beats talent when talent doesn't work hard.","Tim Notke"],
+  ["The secret of getting ahead is getting started.","Mark Twain"],
+  ["Don't watch the clock; do what it does. Keep going.","Sam Levenson"],
+  ["Great things never come from comfort zones.","Unknown"],
+  ["Push yourself, because no one else is going to do it for you.","Unknown"],
+  ["Dream it. Wish it. Do it.","Unknown"],
+  ["Success doesn't just find you. You have to go out and get it.","Unknown"],
+  ["The harder you work for something, the greater you'll feel when you achieve it.","Unknown"],
+  ["Dream bigger. Do bigger.","Unknown"],
+  ["Don't stop when you're tired. Stop when you're done.","Unknown"],
+  ["Wake up with determination. Go to bed with satisfaction.","Unknown"],
+  ["Do something today that your future self will thank you for.","Sean Patrick Flanery"],
+  ["Little things make big days.","Unknown"],
+  ["It's going to be hard, but hard does not mean impossible.","Unknown"],
+  ["Don't wait for opportunity. Create it.","Unknown"],
+  ["Sometimes we're tested not to show our weaknesses, but to discover our strengths.","Unknown"],
+  ["The key to success is to focus on goals, not obstacles.","Unknown"],
+  ["Enthusiasm is the electricity of life.","Gordon Parks"],
+  ["If you want to achieve greatness, stop asking for permission.","Unknown"],
+  ["Things work out best for those who make the best of how things work out.","John Wooden"],
+  ["To live a creative life, we must lose our fear of being wrong.","Joseph Chilton Pearce"],
+  ["If you are not willing to risk the usual, you will have to settle for the ordinary.","Jim Rohn"],
+  ["Trust because you are willing to accept the risk, not because it's safe or certain.","Unknown"],
+  ["Take up one idea. Make that one idea your life.","Swami Vivekananda"],
+  ["All our dreams can come true if we have the courage to pursue them.","Walt Disney"],
+  ["Good things come to people who wait, but better things come to those who go out and get them.","Unknown"],
+  ["If you do what you always did, you will get what you always got.","Albert Einstein"],
+];
+
+// ── DATE (US Central) ──────────────────────────────────────────
+const _now = new Date();
+const _tz  = "America/Chicago";
+const _fmt = o => _now.toLocaleDateString("en-US", { timeZone:_tz, ...o });
+const DAY_NAME = _fmt({ weekday:"long" });
+const DATE_STR = _fmt({ year:"numeric", month:"long", day:"2-digit" });
+const _Y = +_fmt({ year:"numeric" });
+const _M = +_fmt({ month:"numeric" });
+const _D = +_fmt({ day:"numeric" });
+
+function centralOffset(y, m, d) {
+  function nthSun(yr, mo, n) {
+    const dow = new Date(yr, mo - 1, 1).getDay();
+    return 1 + (7 - dow) % 7 + (n - 1) * 7;
+  }
+  let dst;
+  if (m < 3 || m > 11)      dst = false;
+  else if (m > 3 && m < 11) dst = true;
+  else if (m === 3)         dst = d >= nthSun(y, 3, 2);
+  else                      dst = d <  nthSun(y, 11, 1);
+  return dst ? { off:-5, lbl:"CDT (UTC−5)" } : { off:-6, lbl:"CST (UTC−6)" };
+}
+const _ct   = centralOffset(_Y, _M, _D);
+const TZ_LBL = _ct.lbl;
+const LOC_OFF = _ct.off;
+const DAY_OF_YR = Math.ceil((new Date(_Y,_M-1,_D) - new Date(_Y,0,0)) / 86400000);
+
+function vnToLocal(h) { return ((h - 7 + LOC_OFF) % 24 + 24) % 24; }
+function fmtH(h) {
+  const ap = h < 12 ? "AM" : "PM";
+  const h12 = h % 12 === 0 ? 12 : h % 12;
+  return h12 + ":00 " + ap;
+}
+const SH_TIMES = {
+  C1: fmtH(vnToLocal(20)) + " – " + fmtH(vnToLocal(4)),
+  C2: fmtH(vnToLocal(4))  + " – " + fmtH(vnToLocal(12)),
+  C3: fmtH(vnToLocal(22)) + " – " + fmtH(vnToLocal(5)),
+};
+
+// ── HELPERS ────────────────────────────────────────────────────
+function esc(s) {
+  return String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":'&#39;'})[c]);
+}
+function cleanName(n) { return n.replace(/\s*\([^)]*\)/g,"").trim(); }
+function cleanRole(r) { return (r||"").trim().replace(/[,;.]+$/,"").trim(); }
+function initials(n) { return cleanName(n).split(/\s+/).filter(w=>w).slice(-2).map(w=>w[0].toUpperCase()).join("")||"?"; }
+function roleStyle(r) {
+  const l = r.toLowerCase();
+  if (l.includes("mgr"))                              return "background:#fef3c7;color:#92400e;border:1px solid #fcd34d;font-weight:800;";
+  if (l.includes("supr")||l.includes("supervisor"))   return "background:#dbeafe;color:#1d4ed8;border:1px solid #93c5fd;font-weight:800;";
+  return "";
+}
+
+// ── RENDER HELPERS ─────────────────────────────────────────────
+function personRow(p, m) {
+  const ini  = esc(initials(p.name));
+  const name = esc(cleanName(p.name));
+  const rr   = cleanRole(p.role);
+  const rs   = roleStyle(rr);
+  const role = esc(rr);
+  const rHtml = role ? `<span class="p-role${rs?" p-badge":""}" style="${rs}">${role}</span>` : "";
+  return `<div class="p-row">
+    <span class="p-dot"></span>
+    <div class="p-av" style="background:${m.avBg};color:${m.avTxt};">${ini}</div>
+    <span class="p-name">${name}</span>${rHtml}
+  </div>`;
+}
+
+function leaveRow(p) {
+  const lm  = LEAVE_META[p.st]||LEAVE_META.OFF;
+  const ini = esc(initials(p.name));
+  const nm  = esc(cleanName(p.name));
+  const rl  = esc(cleanRole(p.role));
+  const rHtml = rl ? `<span class="l-role">${rl}</span>` : "";
+  return `<div class="l-row">
+    <div class="l-av" style="background:${lm.avBg};color:${lm.avTxt};">${ini}</div>
+    <span class="l-name">${nm}</span>${rHtml}
+    <span class="l-pill" style="background:${lm.pillBg};color:${lm.pillTxt};">${esc(p.st)}</span>
+  </div>`;
+}
+
+function shiftCard(s, grouped) {
+  const people = grouped[s]||[];
+  const m = SHIFT_META[s];
+  const idAttr = s==="C2" ? ' id="card-c2"' : s==="C3" ? ' id="card-c3"' : '';
+  const body = people.length ? people.map(p=>personRow(p,m)).join("") : '<div class="empty-row">—</div>';
+  return `<div class="shift-card"${idAttr}>
+    <div class="card-hdr" style="background:linear-gradient(135deg,${m.grad});">
+      <span class="hdr-lbl">${s}</span>
+      <span class="hdr-sub">Shift ${s.slice(1)}</span>
+      <span class="hdr-time">${SH_TIMES[s]}<br><span class="hdr-tz">${TZ_LBL}</span></span>
+      <span class="hdr-cnt">${people.length}</span>
+    </div>
+    <div class="card-body">${body}</div>
+  </div>`;
+}
+
+function offCol(grouped) {
+  const people = grouped.OTHER||[];
+  if (!people.length) return "";
+  return `<div class="shift-card" id="card-other">
+    <div class="card-hdr" style="background:linear-gradient(135deg,#1e293b,#334155);">
+      <span class="hdr-lbl" style="font-size:14px;letter-spacing:1px;">OFF</span>
+      <span class="hdr-sub">Vắng mặt</span>
+      <span class="hdr-cnt">${people.length}</span>
+    </div>
+    <div class="card-body">${people.map(leaveRow).join("")}</div>
+  </div>`;
+}
+
+// ── RENDER ─────────────────────────────────────────────────────
+function render(grouped) {
+  document.getElementById("day-name").textContent = DAY_NAME;
+  document.getElementById("date-str").textContent = DATE_STR;
+
+  const wc  = { C1:grouped.C1.length, C2:grouped.C2.length, C3:grouped.C3.length };
+  const lc  = { ME:0, NP:0, HO:0, OFF:0 };
+  (grouped.OTHER||[]).forEach(p => { if (p.st in lc) lc[p.st]++; });
+  const working = wc.C1 + wc.C2 + wc.C3;
+  const total   = working + lc.ME + lc.NP + lc.HO + lc.OFF;
+  const counts  = { ...wc, ...lc, work:working, total };
+
+  // build stats row
+  const sr = document.getElementById("stats-row");
+  sr.innerHTML = STAT_CFG.map(s =>
+    `<div class="stat-chip">
+      <span class="n" id="${s.id}" style="color:${s.clr};">${counts[s.key]||0}</span>
+      <span class="l" style="color:${s.clr};">${s.lbl}</span>
+    </div>`
+  ).join("") +
+  `<button id="copy-btn" onclick="copyImg()">📋 Copy</button>
+   <button id="refresh-btn" onclick="loadData()" title="Refresh">↻</button>
+   <span id="status-msg"></span>`;
+
+  // main grid
+  const hasOther = (grouped.OTHER||[]).length > 0;
+  const main = document.getElementById("main");
+  main.className = hasOther ? "has-other" : "";
+  main.innerHTML = shiftCard("C1",grouped) + shiftCard("C3",grouped) + shiftCard("C2",grouped) + offCol(grouped);
+
+  // footer
+  document.getElementById("footer").innerHTML =
+    `Shift 1: ${SH_TIMES.C1} &nbsp;·&nbsp; Shift 2: ${SH_TIMES.C2} &nbsp;·&nbsp; Shift 3: ${SH_TIMES.C3} &nbsp;·&nbsp; All times <strong>${TZ_LBL}</strong> &nbsp;·&nbsp; TECH TEAM`;
+
+  // quote
+  const q = QUOTES[DAY_OF_YR % QUOTES.length];
+  document.getElementById("qt").textContent = q[0];
+  document.getElementById("qa").textContent = "— " + q[1];
+
+  document.getElementById("loading").style.display = "none";
+  document.getElementById("app").style.display = "block";
+}
+
+// ── FETCH & PARSE ──────────────────────────────────────────────
+async function loadData() {
+  const loadEl = document.getElementById("loading");
+  const appEl  = document.getElementById("app");
+  loadEl.innerHTML = '<div class="spinner"></div><p>Đang tải dữ liệu…</p>';
+  loadEl.style.display = "flex";
+  appEl.style.display  = "none";
+
+  try {
+    const resp = await fetch(SP_URL + "&download=1");
+    if (!resp.ok) throw new Error("HTTP " + resp.status);
+    const buf  = await resp.arrayBuffer();
+    const wb   = XLSX.read(buf, { type:"array" });
+    const ws   = wb.Sheets[FILTER_TAB];
+    if (!ws) throw new Error(`Tab "${FILTER_TAB}" không tìm thấy`);
+
+    const rows    = XLSX.utils.sheet_to_json(ws, { header:1, defval:"" });
+    const grouped = { C1:[], C2:[], C3:[], OTHER:[] };
+    const norm    = v => String(v||"").trim().toUpperCase();
+
+    for (let i = 2; i < rows.length; i++) {
+      const row    = rows[i];
+      const name   = String(row[1]||"").trim();   // col B
+      const role   = String(row[2]||"").trim();   // col C
+      const status = norm(row[3]);                 // col D
+      if (!name || /[0-9:\/]/.test(name)) continue;
+      if (WORK[status])       grouped[status].push({ name, role });
+      else if (LEAVE[status]) grouped.OTHER.push({ name, role, st:status });
+    }
+    render(grouped);
+  } catch(err) {
+    loadEl.innerHTML = `
+      <div style="text-align:center;padding:24px;max-width:440px">
+        <div style="font-size:36px;margin-bottom:14px">⚠️</div>
+        <div style="color:#f87171;font-size:15px;font-weight:700;margin-bottom:8px">Không thể tải dữ liệu</div>
+        <div style="color:#64748b;font-size:13px;line-height:1.7;margin-bottom:16px">${esc(err.message)}</div>
+        ${err.message.toLowerCase().includes("cors")||err.message.toLowerCase().includes("fetch")||err.message.toLowerCase().includes("failed")
+          ? `<div style="color:#fbbf24;font-size:12px;background:rgba(251,191,36,.08);border:1px solid rgba(251,191,36,.2);border-radius:8px;padding:10px 14px;line-height:1.6;margin-bottom:14px">
+              🔒 Lỗi CORS — SharePoint không cho phép đọc từ domain này.<br>Cần cấu hình proxy. Liên hệ admin.
+            </div>` : ""}
+        <button onclick="loadData()" style="padding:7px 18px;background:rgba(59,130,246,.15);color:#60a5fa;border:1px solid rgba(59,130,246,.3);border-radius:7px;font-size:12px;font-weight:700;cursor:pointer">↻ Thử lại</button>
+      </div>`;
+  }
+}
+
+// ── COPY IMAGE ─────────────────────────────────────────────────
+function copyImg() {
+  const btn = document.getElementById("copy-btn");
+  const msg = document.getElementById("status-msg");
+  if (!btn) return;
+  btn.disabled = true; btn.textContent = "⏳ Đang tạo…";
+  msg.textContent = "";
+
+  const reset = () => { btn.disabled = false; btn.textContent = "📋 Copy"; };
+  const flash = (t, ms) => { msg.textContent = t; setTimeout(()=> msg.textContent="", ms||4000); };
+  const dl    = c => { const a=document.createElement("a"); a.href=c.toDataURL("image/png"); a.download="tech-shift.png"; a.click(); };
+
+  const glassEls = [...document.querySelectorAll(".shift-card,.stat-chip")];
+  glassEls.forEach(el => { el.style.backdropFilter="none"; el.style.webkitBackdropFilter="none"; });
+  const restore = () => glassEls.forEach(el => { el.style.backdropFilter=""; el.style.webkitBackdropFilter=""; });
+
+  (document.fonts&&document.fonts.ready ? document.fonts.ready : Promise.resolve())
+    .then(() => {
+      const W = document.body.scrollWidth;
+      const H = document.body.scrollHeight;
+      const scale = Math.max(1.25, Math.min(2, 1920/W));
+      return html2canvas(document.body, {
+        scale, useCORS:true, backgroundColor:"#0b1426",
+        logging:false, imageTimeout:0, windowWidth:W, windowHeight:H
+      });
+    })
+    .then(canvas => {
+      restore();
+      canvas.toBlob(blob => {
+        if (!blob) { reset(); flash("❌ Không tạo được ảnh"); return; }
+        const ok = navigator.clipboard && window.ClipboardItem;
+        if (!ok) { dl(canvas); reset(); flash("⚠️ Đã tải xuống (trình duyệt không hỗ trợ copy)"); return; }
+        navigator.clipboard.write([new ClipboardItem({"image/png":blob})])
+          .then(() => { reset(); flash("✅ Đã copy! Paste vào Telegram."); })
+          .catch(() => { dl(canvas); reset(); flash("⚠️ Clipboard bị chặn, đã tải xuống"); });
+      }, "image/png");
+    })
+    .catch(err => { restore(); reset(); flash("❌ Lỗi: "+(err&&err.message||err), 6000); });
+}
+
+loadData();
+</script>
+</body>
+</html>

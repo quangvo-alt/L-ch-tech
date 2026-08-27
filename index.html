@@ -254,7 +254,7 @@ body::before{
 </div>
 
 <script>
-const SP_URL     = "https://mailserver02-my.sharepoint.com/:x:/g/personal/quang_vo_macusaone_com/IQD6dYl3Iq8gSqmLzwJr54SFAUxbGkQ6nwH0TMb3FTpj6Js?e=f023Mt";
+const SP_URL     = "https://lichtech.quang-vo.workers.dev";
 const FILTER_TAB = "Filter";
 const WORK       = { C1:1, C2:1, C3:1 };
 const LEAVE      = { OFF:1, ME:1, NP:1, HO:1 };
@@ -477,7 +477,7 @@ async function loadData() {
   appEl.style.display  = "none";
 
   try {
-    const resp = await fetch(SP_URL + "&download=1");
+    const resp = await fetch(SP_URL);
     if (!resp.ok) throw new Error("HTTP " + resp.status);
     const buf  = await resp.arrayBuffer();
     const wb   = XLSX.read(buf, { type:"array" });

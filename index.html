@@ -13,9 +13,9 @@
   --bg:         #0c1322;
   --bg-dot:     rgba(99,179,237,.08);
   --card-bg:    rgba(14,26,60,.78);
-  --card-border:rgba(255,255,255,.09);
-  --card-inset: rgba(255,255,255,.05);
-  --card-shadow:0 8px 30px rgba(0,0,0,.45);
+  --card-border:rgba(255,255,255,.22);
+  --card-inset: rgba(255,255,255,.08);
+  --card-shadow:0 8px 30px rgba(0,0,0,.5),0 0 0 1px rgba(255,255,255,.06);
   --hdr-bg:     rgba(255,255,255,.04);
   --hdr-border: rgba(255,255,255,.08);
   --row-bg:     rgba(255,255,255,.9);
@@ -48,9 +48,9 @@
   --bg:         #eef2f9;
   --bg-dot:     rgba(59,130,246,.05);
   --card-bg:    rgba(255,255,255,.97);
-  --card-border:rgba(0,0,0,.08);
+  --card-border:rgba(0,0,0,.18);
   --card-inset: rgba(255,255,255,.6);
-  --card-shadow:0 2px 14px rgba(0,0,0,.09);
+  --card-shadow:0 4px 16px rgba(0,0,0,.12);
   --hdr-bg:     rgba(0,0,0,.025);
   --hdr-border: rgba(0,0,0,.07);
   --row-bg:     #f8fafc;
@@ -625,13 +625,15 @@ function copyImg() {
 
   (document.fonts&&document.fonts.ready ? document.fonts.ready : Promise.resolve())
     .then(() => {
-      const W = document.body.scrollWidth;
-      const H = document.body.scrollHeight;
+      const W = Math.max(document.body.scrollWidth, document.documentElement.scrollWidth);
+      const H = Math.max(document.body.scrollHeight, document.documentElement.scrollHeight);
       const scale = Math.max(1.25, Math.min(2, 1920/W));
       const bg = document.documentElement.getAttribute("data-theme") === "light" ? "#eef2f9" : "#0c1322";
       return html2canvas(document.body, {
         scale, useCORS:true, backgroundColor:bg,
-        logging:false, imageTimeout:0, windowWidth:W, windowHeight:H
+        logging:false, imageTimeout:0,
+        width:W, height:H, windowWidth:W, windowHeight:H,
+        scrollX:0, scrollY:-window.scrollY
       });
     })
     .then(canvas => {

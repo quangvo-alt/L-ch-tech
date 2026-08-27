@@ -623,21 +623,27 @@ function copyImg() {
   glassEls.forEach(el => { el.style.backdropFilter="none"; el.style.webkitBackdropFilter="none"; });
   const restore = () => glassEls.forEach(el => { el.style.backdropFilter=""; el.style.webkitBackdropFilter=""; });
 
+  // Scroll to top so sticky topbar is visible, then capture full page
+  const prevScroll = window.scrollY;
+  window.scrollTo(0, 0);
+
   (document.fonts&&document.fonts.ready ? document.fonts.ready : Promise.resolve())
+    .then(() => new Promise(r => requestAnimationFrame(r)))
     .then(() => {
       const W = Math.max(document.body.scrollWidth, document.documentElement.scrollWidth);
       const H = Math.max(document.body.scrollHeight, document.documentElement.scrollHeight);
       const scale = Math.max(1.25, Math.min(2, 1920/W));
       const bg = document.documentElement.getAttribute("data-theme") === "light" ? "#eef2f9" : "#0c1322";
-      return html2canvas(document.body, {
+      return html2canvas(document.documentElement, {
         scale, useCORS:true, backgroundColor:bg,
         logging:false, imageTimeout:0,
         width:W, height:H, windowWidth:W, windowHeight:H,
-        scrollX:0, scrollY:-window.scrollY
+        scrollX:0, scrollY:0
       });
     })
     .then(canvas => {
       restore();
+      window.scrollTo(0, prevScroll);
       canvas.toBlob(blob => {
         if (!blob) { reset(); flash("❌ Không tạo được ảnh"); return; }
         const ok = navigator.clipboard && window.ClipboardItem;
@@ -647,7 +653,7 @@ function copyImg() {
           .catch(() => { dl(canvas); reset(); flash("⚠️ Clipboard bị chặn, đã tải xuống"); });
       }, "image/png");
     })
-    .catch(err => { restore(); reset(); flash("❌ Lỗi: "+(err&&err.message||err), 6000); });
+    .catch(err => { restore(); window.scrollTo(0, prevScroll); reset(); flash("❌ Lỗi: "+(err&&err.message||err), 6000); });
 }
 
 loadData();

@@ -40,6 +40,9 @@
   --btn-bg:     rgba(255,255,255,.1);
   --btn-bdr:    rgba(255,255,255,.2);
   --btn-txt:    #e0f2fe;
+  --hdr-sub-clr:rgba(255,255,255,.9);
+  --hdr-time-clr:rgba(255,255,255,.8);
+  --hdr-tz-clr: rgba(255,255,255,.55);
 }
 [data-theme="light"] {
   --bg:         #eef2f9;
@@ -72,6 +75,10 @@
   --btn-bg:     rgba(255,255,255,.15);
   --btn-bdr:    rgba(255,255,255,.25);
   --btn-txt:    #fff;
+  --hdr-sub-clr:#1e3a8a;
+  --hdr-time-clr:#1e40af;
+  --hdr-tz-clr: #2563eb;
+  --row-role:   #1e40af;
 }
 
 /* ── RESET ────────────────────────────────────────────────────── */
@@ -177,9 +184,9 @@ body::before{
 }
 .hdr-accent{position:absolute;left:0;top:0;bottom:0;width:4px}
 .hdr-lbl{font-family:'Outfit',sans-serif;font-size:20px;font-weight:900;color:var(--txt);letter-spacing:1px;margin-left:6px}
-.hdr-sub{font-size:10px;font-weight:600;color:var(--txt2)}
-.hdr-time{font-size:9px;color:var(--txt3);margin-left:auto;text-align:right;line-height:1.5}
-.hdr-tz{font-size:8px;color:var(--txt3);opacity:.7}
+.hdr-sub{font-size:13px;font-weight:700;color:var(--hdr-sub-clr)}
+.hdr-time{font-size:11px;color:var(--hdr-time-clr);margin-left:auto;text-align:right;line-height:1.5;font-weight:600}
+.hdr-tz{font-size:10px;color:var(--hdr-tz-clr);font-weight:600}
 .hdr-cnt{
   background:var(--badge-bg);border:1px solid var(--badge-bdr);
   border-radius:999px;padding:2px 10px;
@@ -200,7 +207,7 @@ body::before{
   font-family:'Outfit',sans-serif;font-size:10px;font-weight:900;flex-shrink:0;
 }
 .p-name{font-size:17px;font-weight:800;color:var(--row-name);flex:1}
-.p-role{font-size:11px;font-weight:600;color:var(--row-role);white-space:nowrap}
+.p-role{font-size:14px;font-weight:600;color:var(--row-role);white-space:nowrap}
 .p-badge{padding:2px 7px;border-radius:5px;border-width:1px;border-style:solid;font-size:10px;font-weight:800}
 .empty-row{font-size:11px;color:var(--empty);padding:8px 0;text-align:center}
 
@@ -260,9 +267,9 @@ body::before{
   .shift-card{border-radius:16px}
   .card-hdr{padding:12px 16px}
   .hdr-lbl{font-size:22px;margin-left:8px}
-  .hdr-sub{font-size:11px}
-  .hdr-time{font-size:10px}
-  .hdr-tz{font-size:9px}
+  .hdr-sub{font-size:14px}
+  .hdr-time{font-size:12px}
+  .hdr-tz{font-size:11px}
   .hdr-cnt{font-size:14px;padding:3px 12px}
   .card-body{padding:10px 12px 12px;gap:5px}
 
@@ -270,7 +277,7 @@ body::before{
   .p-av{width:36px;height:36px;font-size:11px}
   .p-dot{width:7px;height:7px}
   .p-name{font-size:19px}
-  .p-role{font-size:11px}
+  .p-role{font-size:14px}
   .p-badge{font-size:10px}
 
   #off-row{margin:12px 20px 0;border-radius:16px}

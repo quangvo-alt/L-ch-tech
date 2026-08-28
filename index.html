@@ -575,7 +575,7 @@ async function loadData() {
   appEl.style.display  = "none";
 
   try {
-    const resp = await fetch(SP_URL);
+    const resp = await fetch(SP_URL + "?v=" + Date.now());
     if (!resp.ok) throw new Error("HTTP " + resp.status);
     const buf  = await resp.arrayBuffer();
     const wb   = XLSX.read(buf, { type:"array" });

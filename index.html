@@ -657,6 +657,15 @@ function copyImg() {
 }
 
 loadData();
+
+// Auto-reload when date changes (midnight US Central)
+(function() {
+  const startDay = new Date().toLocaleDateString("en-US", { timeZone: "America/Chicago" });
+  setInterval(() => {
+    const now = new Date().toLocaleDateString("en-US", { timeZone: "America/Chicago" });
+    if (now !== startDay) window.location.reload();
+  }, 60000);
+})();
 </script>
 </body>
 </html>

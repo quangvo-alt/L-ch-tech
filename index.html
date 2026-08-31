@@ -588,9 +588,9 @@ async function loadData() {
 
     for (let i = 2; i < rows.length; i++) {
       const row    = rows[i];
-      const name   = String(row[1]||"").trim();
-      const role   = String(row[2]||"").trim();
-      const status = norm(row[3]);
+      const name   = String(row[6]||"").trim();
+      const role   = String(row[7]||"").trim();
+      const status = norm(row[8]);
       if (!name || /[0-9:\/]/.test(name)) continue;
       if (WORK[status])       grouped[status].push({ name, role });
       else if (LEAVE[status]) grouped.OTHER.push({ name, role, st:status });
@@ -672,9 +672,9 @@ setInterval(async () => {
     const norm    = v => String(v||"").trim().toUpperCase();
     for (let i = 2; i < rows.length; i++) {
       const row    = rows[i];
-      const name   = String(row[1]||"").trim();
-      const role   = String(row[2]||"").trim();
-      const status = norm(row[3]);
+      const name   = String(row[6]||"").trim();
+      const role   = String(row[7]||"").trim();
+      const status = norm(row[8]);
       if (!name || /[0-9:\/]/.test(name)) continue;
       if (WORK[status])       grouped[status].push({ name, role });
       else if (LEAVE[status]) grouped.OTHER.push({ name, role, st:status });

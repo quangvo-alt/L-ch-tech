@@ -588,19 +588,53 @@ async function loadData() {
     const ws   = wb.Sheets[FILTER_TAB];
     if (!ws) throw new Error(`Tab "${FILTER_TAB}" không tìm thấy`);
 
-    const rows    = XLSX.utils.sheet_to_json(ws, { header:1, defval:"" });
-    const grouped = { C1:[], C2:[], C3:[], OTHER:[] };
-    const norm    = v => String(v||"").trim().toUpperCase();
+    const rows = XLSX.utils.sheet_to_json(ws, { header:1, defval:"" });
+    console.log("=== FILTER TAB DEBUG ===", rows.length, "rows");
+    for (let d = 0; d < Math.min(4, rows.length); d++) console.log(`Row[${d}]:`, JSON.stringify(rows[d]));
 
-    for (let i = 2; i < rows.length; i++) {
+    // Auto-detect shift column by scanning data rows for C1/C2/C3 values
+    const norm    = v => String(v||"").trim().toUpperCase();
+    const ALLVALS = new Set([...Object.keys(WORK), ...Object.keys(LEAVE)]);
+    let shiftCol = -1, nameCol = -1, roleCol = -1;
+
+    // Try to find shift column: look for any data row containing C1/C2/C3
+    outer: for (let i = 1; i < Math.min(rows.length, 10); i++) {
+      for (let j = 0; j < rows[i].length; j++) {
+        if (ALLVALS.has(norm(rows[i][j]))) {
+          shiftCol = j;
+          break outer;
+        }
+      }
+    }
+    if (shiftCol < 0) throw new Error("Không tìm thấy cột Shift (C1/C2/C3) trong file");
+
+    // Find the name column: look for the header row that labels "Tech Team" / "Name" / non-numeric text column
+    // Simple heuristic: name col = shiftCol - 2, role col = shiftCol - 1
+    // But verify by checking that the header-row value is not numeric
+    nameCol = shiftCol - 2;
+    roleCol = shiftCol - 1;
+    // Edge case: if shiftCol < 2, fall back to first text column
+    if (nameCol < 0) { nameCol = 0; roleCol = 1; }
+    console.log("Auto-detected cols → name:", nameCol, "role:", roleCol, "shift:", shiftCol);
+
+    const grouped = { C1:[], C2:[], C3:[], OTHER:[] };
+    // Find first data row (skip header rows — row must have a valid shift value)
+    let dataStart = 1;
+    for (let i = 1; i < rows.length; i++) {
+      if (ALLVALS.has(norm(rows[i][shiftCol]))) { dataStart = i; break; }
+    }
+    console.log("Data starts at row index:", dataStart);
+
+    for (let i = dataStart; i < rows.length; i++) {
       const row    = rows[i];
-      const name   = String(row[6]||"").trim();
-      const role   = String(row[7]||"").trim();
-      const status = norm(row[8]);
-      if (!name || /[0-9:\/]/.test(name)) continue;
+      const name   = String(row[nameCol]||"").trim();
+      const role   = String(row[roleCol]||"").trim();
+      const status = norm(row[shiftCol]);
+      if (!name || /^[0-9]+$/.test(name)) continue;
       if (WORK[status])       grouped[status].push({ name, role });
       else if (LEAVE[status]) grouped.OTHER.push({ name, role, st:status });
     }
+    console.log("Result:", {C1:grouped.C1.length,C2:grouped.C2.length,C3:grouped.C3.length,OTHER:grouped.OTHER.length});
     ["C1","C2","C3"].forEach(k => grouped[k].sort((a,b) => rolePriority(a.role) - rolePriority(b.role)));
     render(grouped);
   } catch(err) {
@@ -674,15 +708,29 @@ setInterval(async () => {
     const wb   = XLSX.read(buf, { type:"array" });
     const ws   = wb.Sheets[FILTER_TAB];
     if (!ws) return;
-    const rows    = XLSX.utils.sheet_to_json(ws, { header:1, defval:"" });
-    const grouped = { C1:[], C2:[], C3:[], OTHER:[] };
+    const rows = XLSX.utils.sheet_to_json(ws, { header:1, defval:"" });
     const norm    = v => String(v||"").trim().toUpperCase();
-    for (let i = 2; i < rows.length; i++) {
+    const ALLVALS2 = new Set([...Object.keys(WORK), ...Object.keys(LEAVE)]);
+    let shiftCol2 = -1;
+    outer2: for (let i = 1; i < Math.min(rows.length, 10); i++) {
+      for (let j = 0; j < rows[i].length; j++) {
+        if (ALLVALS2.has(norm(rows[i][j]))) { shiftCol2 = j; break outer2; }
+      }
+    }
+    if (shiftCol2 < 0) return;
+    const nameCol2 = Math.max(0, shiftCol2 - 2);
+    const roleCol2 = Math.max(1, shiftCol2 - 1);
+    const grouped = { C1:[], C2:[], C3:[], OTHER:[] };
+    let dataStart2 = 1;
+    for (let i = 1; i < rows.length; i++) {
+      if (ALLVALS2.has(norm(rows[i][shiftCol2]))) { dataStart2 = i; break; }
+    }
+    for (let i = dataStart2; i < rows.length; i++) {
       const row    = rows[i];
-      const name   = String(row[6]||"").trim();
-      const role   = String(row[7]||"").trim();
-      const status = norm(row[8]);
-      if (!name || /[0-9:\/]/.test(name)) continue;
+      const name   = String(row[nameCol2]||"").trim();
+      const role   = String(row[roleCol2]||"").trim();
+      const status = norm(row[shiftCol2]);
+      if (!name || /^[0-9]+$/.test(name)) continue;
       if (WORK[status])       grouped[status].push({ name, role });
       else if (LEAVE[status]) grouped.OTHER.push({ name, role, st:status });
     }

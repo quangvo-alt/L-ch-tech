@@ -464,6 +464,12 @@ function esc(s) {
 function cleanName(n) { return n.replace(/\s*\([^)]*\)/g,"").trim(); }
 function cleanRole(r) { return (r||"").trim().replace(/[,;.]+$/,"").trim(); }
 function initials(n) { return cleanName(n).split(/\s+/).filter(w=>w).slice(-2).map(w=>w[0].toUpperCase()).join("")||"?"; }
+function rolePriority(r) {
+  const l = (r||"").toLowerCase();
+  if (l.includes("mgr"))                            return 0;
+  if (l.includes("supr")||l.includes("supervisor")) return 1;
+  return 2;
+}
 function roleStyle(r) {
   const l = r.toLowerCase();
   if (l.includes("mgr"))                             return "background:#fef3c7;color:#92400e;border:1px solid #fcd34d;font-weight:800;";
@@ -595,6 +601,7 @@ async function loadData() {
       if (WORK[status])       grouped[status].push({ name, role });
       else if (LEAVE[status]) grouped.OTHER.push({ name, role, st:status });
     }
+    ["C1","C2","C3"].forEach(k => grouped[k].sort((a,b) => rolePriority(a.role) - rolePriority(b.role)));
     render(grouped);
   } catch(err) {
     loadEl.innerHTML = `
@@ -679,6 +686,7 @@ setInterval(async () => {
       if (WORK[status])       grouped[status].push({ name, role });
       else if (LEAVE[status]) grouped.OTHER.push({ name, role, st:status });
     }
+    ["C1","C2","C3"].forEach(k => grouped[k].sort((a,b) => rolePriority(a.role) - rolePriority(b.role)));
     render(grouped);
   } catch(e) {}
 }, 5 * 60 * 1000);

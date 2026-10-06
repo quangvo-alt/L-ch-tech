@@ -209,9 +209,16 @@ body::before{
   display:flex;align-items:center;justify-content:center;
   font-family:'Outfit',sans-serif;font-size:10px;font-weight:900;flex-shrink:0;
 }
-.p-name{font-size:17px;font-weight:800;color:var(--row-name);flex:1}
-.p-role{font-size:14px;font-weight:600;color:var(--row-role);white-space:nowrap}
-.p-badge{padding:3px 10px;border-radius:6px;border-width:1px;border-style:solid;font-size:13px;font-weight:800}
+.p-info{flex:1;min-width:0;display:flex;flex-direction:column;align-items:flex-start;gap:2px}
+.p-name{font-size:17px;font-weight:800;color:var(--row-name);line-height:1.2;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.p-role{font-size:13px;font-weight:600;color:var(--row-role);line-height:1.25;max-width:100%}
+.p-badge{padding:2px 8px;border-radius:6px;border-width:1px;border-style:solid;font-size:12px;font-weight:800}
+.p-mic{
+  width:28px;height:28px;border-radius:50%;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  background:linear-gradient(135deg,#ec4899,#8b5cf6);
+  box-shadow:0 2px 8px rgba(236,72,153,.45);
+}
 .empty-row{font-size:11px;color:var(--empty);padding:8px 0;text-align:center}
 
 /* ── OFF ROW (horizontal, full width, below grid) ─────────────── */
@@ -282,8 +289,9 @@ body::before{
   .p-av{width:36px;height:36px;font-size:11px}
   .p-dot{width:7px;height:7px}
   .p-name{font-size:19px}
-  .p-role{font-size:14px}
-  .p-badge{font-size:14px;padding:4px 12px}
+  .p-role{font-size:13px}
+  .p-badge{font-size:13px;padding:2px 10px}
+  .p-mic{width:30px;height:30px}
 
   #off-row{margin:12px 20px 0;border-radius:16px}
   #off-row .card-hdr{padding:10px 18px}
@@ -490,6 +498,8 @@ function roleStyle(r) {
   return "";
 }
 
+const MIC_SVG = `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2" width="6" height="12" rx="3" fill="#fff"/><path d="M5 11a7 7 0 0 0 14 0"/><path d="M12 18v4"/></svg>`;
+
 /* ── RENDER ────────────────────────────────────────────────────── */
 function personRow(p, m) {
   const ini  = esc(initials(p.name));
@@ -498,10 +508,11 @@ function personRow(p, m) {
   const rs   = roleStyle(rr);
   const role = esc(rr);
   const rHtml = role ? `<span class="p-role${rs?" p-badge":""}" style="${rs}">${role}</span>` : "";
+  const mic = /lobby/i.test(rr) ? `<span class="p-mic" title="Tech Lobby">${MIC_SVG}</span>` : "";
   return `<div class="p-row">
     <span class="p-dot"></span>
     <div class="p-av" style="background:${m.avBg};color:${m.avTxt};">${ini}</div>
-    <span class="p-name">${name}</span>${rHtml}
+    <div class="p-info"><span class="p-name">${name}</span>${rHtml}</div>${mic}
   </div>`;
 }
 

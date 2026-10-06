@@ -141,15 +141,15 @@ body::before{
 }
 
 /* STATS */
-#stats-row{display:flex;align-items:center;gap:4px;flex-shrink:0}
-.stat-chip{
-  display:flex;flex-direction:column;align-items:center;
+#stats-row{
+  display:flex;align-items:center;flex-shrink:0;
   background:var(--stat-bg);border:1px solid var(--stat-bdr);
-  border-radius:8px;padding:3px 7px;min-width:30px;
-  backdrop-filter:blur(6px);
+  border-radius:999px;padding:3px 4px;
 }
-.stat-chip .n{font-family:'Outfit',sans-serif;font-size:14px;font-weight:900;line-height:1;text-shadow:0 0 10px currentColor}
-.stat-chip .l{font-size:8px;font-weight:700;margin-top:1px;color:var(--stat-lbl)}
+.stat-chip{display:flex;align-items:baseline;gap:4px;padding:2px 9px}
+.stat-chip+.stat-chip{border-left:1px solid var(--stat-bdr)}
+.stat-chip .n{font-family:'Outfit',sans-serif;font-size:15px;font-weight:900;line-height:1}
+.stat-chip .l{font-size:10px;font-weight:700;color:var(--stat-lbl)}
 
 /* ACTIONS */
 #actions{display:flex;align-items:center;gap:5px;flex-shrink:0}
@@ -263,10 +263,9 @@ body::before{
   #date-str{font-size:11px}
   #quote-line{font-size:14px;margin-top:4px}
   #quote-line .q-author{font-size:12px}
-  .stat-chip{padding:4px 10px;min-width:42px;border-radius:9px}
+  .stat-chip{padding:3px 12px}
   .stat-chip .n{font-size:17px}
-  .stat-chip .l{font-size:9px}
-  #stats-row{gap:5px}
+  .stat-chip .l{font-size:11px}
   .t-btn{height:34px}
   #copy-btn{padding:0 15px;font-size:12px}
   #refresh-btn,#theme-btn{width:34px;font-size:15px}
@@ -392,15 +391,7 @@ const LEAVE_META = {
 };
 const STAT_CFG = [
   { key:"work",  lbl:"Work",  clr:"#4ade80" },
-  { key:"C1.1",  lbl:"C1.1",  clr:"#22d3ee" },
-  { key:"C1",    lbl:"C1",    clr:"#60a5fa" },
-  { key:"C3",    lbl:"C3",    clr:"#4ade80" },
-  { key:"C4",    lbl:"C4",    clr:"#c084fc" },
-  { key:"C2",    lbl:"C2",    clr:"#fb923c" },
-  { key:"ME",    lbl:"ME",    clr:"#a78bfa" },
-  { key:"NP",    lbl:"NP",    clr:"#fbbf24" },
-  { key:"HO",    lbl:"HO",    clr:"#f87171" },
-  { key:"OFF",   lbl:"OFF",   clr:"#94a3b8" },
+  { key:"leave", lbl:"Off",   clr:"#f87171" },
   { key:"total", lbl:"Total", clr:"#fbbf24" },
 ];
 const QUOTES = [
@@ -561,7 +552,7 @@ function render(grouped) {
   (grouped.OTHER||[]).forEach(p => { if (p.st in lc) lc[p.st]++; });
   const working = Object.values(wc).reduce((a,b) => a+b, 0);
   const total   = working + lc.ME + lc.NP + lc.HO + lc.OFF;
-  const counts  = { ...wc, ...lc, work:working, total };
+  const counts  = { work:working, leave:total-working, total };
 
   document.getElementById("stats-row").innerHTML = STAT_CFG.map(s =>
     `<div class="stat-chip">

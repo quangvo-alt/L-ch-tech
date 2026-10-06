@@ -259,6 +259,16 @@ body::before{
 /* ── FOOTER ───────────────────────────────────────────────────── */
 #footer{display:none}
 
+/* ── MOBILE TOPBAR: brand + buttons / date + quote / stats ─────── */
+@media(max-width:899px){
+  #topbar{flex-wrap:wrap;row-gap:8px}
+  #actions{margin-left:auto}
+  #date-block{order:3;flex-basis:100%;padding:0}
+  #quote-line{white-space:normal}
+  #stats-row{order:4;margin:0 auto}
+  #status-msg{position:absolute;right:14px;top:100%;margin-top:4px}
+}
+
 /* ── DESKTOP ──────────────────────────────────────────────────── */
 @media(min-width:900px){
   #topbar{padding:10px 22px;gap:10px}
@@ -595,6 +605,55 @@ function render(grouped) {
 }
 
 /* ── FETCH ─────────────────────────────────────────────────────── */
+const norm = v => String(v||"").trim().toUpperCase();
+const STATUS_VALS = new Set([...Object.keys(WORK), ...Object.keys(LEAVE)]);
+
+function detectCols(rows) {
+  for (let i = 0; i < Math.min(rows.length, 10); i++) {
+    const h = rows[i].map(c => String(c||"").trim().toLowerCase());
+    const shift = h.findIndex(c => c === "shift" || c === "ca");
+    if (shift < 0) continue;
+    // Hidden cols B–D hold an older copy of the list; only look just left of "Shift"
+    const nearLeft = test => { for (let j = shift - 1; j >= Math.max(0, shift - 4); j--) if (test(h[j])) return j; return -1; };
+    let name = nearLeft(c => c.includes("tech team") || c === "name" || c === "tên");
+    let role = nearLeft(c => c.includes("role") || c.includes("function") || c.includes("vai trò"));
+    if (name < 0) name = shift - 2;
+    if (role < 0) role = shift - 1;
+    if (name >= 0 && role >= 0) return { name, role, shift, start: i + 1 };
+  }
+  // Fallback: first column holding a known status value
+  for (let i = 0; i < Math.min(rows.length, 10); i++) {
+    let shift = -1;
+    rows[i].forEach((c, j) => { if (STATUS_VALS.has(norm(c))) shift = j; });
+    if (shift >= 2) return { name: shift - 2, role: shift - 1, shift, start: i };
+  }
+  throw new Error("Không tìm thấy cột Shift trong tab " + FILTER_TAB);
+}
+
+async function fetchGrouped() {
+  const resp = await fetch(SP_URL + "?v=" + Date.now(), { cache:"no-store" });
+  if (!resp.ok) throw new Error("HTTP " + resp.status);
+  const wb = XLSX.read(await resp.arrayBuffer(), { type:"array" });
+  const ws = wb.Sheets[FILTER_TAB];
+  if (!ws) throw new Error(`Tab "${FILTER_TAB}" không tìm thấy`);
+  const rows = XLSX.utils.sheet_to_json(ws, { header:1, defval:"" });
+  const col  = detectCols(rows);
+
+  const grouped = { OTHER:[] };
+  Object.keys(WORK).forEach(k => grouped[k] = []);
+  for (let i = col.start; i < rows.length; i++) {
+    const row    = rows[i];
+    const name   = String(row[col.name]||"").trim();
+    const role   = String(row[col.role]||"").trim();
+    const status = norm(row[col.shift]);
+    if (!name || /^[0-9]+$/.test(name)) continue;
+    if (WORK[status])       grouped[status].push({ name, role });
+    else if (LEAVE[status]) grouped.OTHER.push({ name, role, st:status });
+  }
+  Object.keys(WORK).forEach(k => grouped[k].sort((a,b) => rolePriority(a.role) - rolePriority(b.role)));
+  return grouped;
+}
+
 async function loadData() {
   const loadEl = document.getElementById("loading");
   const appEl  = document.getElementById("app");
@@ -603,63 +662,7 @@ async function loadData() {
   appEl.style.display  = "none";
 
   try {
-    const resp = await fetch(SP_URL + "?v=" + Date.now());
-    if (!resp.ok) throw new Error("HTTP " + resp.status);
-    const buf  = await resp.arrayBuffer();
-    const wb   = XLSX.read(buf, { type:"array" });
-    const ws   = wb.Sheets[FILTER_TAB];
-    if (!ws) throw new Error(`Tab "${FILTER_TAB}" không tìm thấy`);
-
-    const rows = XLSX.utils.sheet_to_json(ws, { header:1, defval:"" });
-    console.log("=== FILTER TAB DEBUG ===", rows.length, "rows");
-    for (let d = 0; d < Math.min(4, rows.length); d++) console.log(`Row[${d}]:`, JSON.stringify(rows[d]));
-
-    // Auto-detect shift column by scanning data rows for C1/C2/C3 values
-    const norm    = v => String(v||"").trim().toUpperCase();
-    const ALLVALS = new Set([...Object.keys(WORK), ...Object.keys(LEAVE)]);
-    let shiftCol = -1, nameCol = -1, roleCol = -1;
-
-    // Try to find shift column: look for any data row containing C1/C2/C3
-    outer: for (let i = 1; i < Math.min(rows.length, 10); i++) {
-      for (let j = 0; j < rows[i].length; j++) {
-        if (ALLVALS.has(norm(rows[i][j]))) {
-          shiftCol = j;
-          break outer;
-        }
-      }
-    }
-    if (shiftCol < 0) throw new Error("Không tìm thấy cột Shift (C1/C2/C3) trong file");
-
-    // Find the name column: look for the header row that labels "Tech Team" / "Name" / non-numeric text column
-    // Simple heuristic: name col = shiftCol - 2, role col = shiftCol - 1
-    // But verify by checking that the header-row value is not numeric
-    nameCol = shiftCol - 2;
-    roleCol = shiftCol - 1;
-    // Edge case: if shiftCol < 2, fall back to first text column
-    if (nameCol < 0) { nameCol = 0; roleCol = 1; }
-    console.log("Auto-detected cols → name:", nameCol, "role:", roleCol, "shift:", shiftCol);
-
-    const grouped = { OTHER:[] };
-    Object.keys(WORK).forEach(k => grouped[k] = []);
-    // Find first data row (skip header rows — row must have a valid shift value)
-    let dataStart = 1;
-    for (let i = 1; i < rows.length; i++) {
-      if (ALLVALS.has(norm(rows[i][shiftCol]))) { dataStart = i; break; }
-    }
-    console.log("Data starts at row index:", dataStart);
-
-    for (let i = dataStart; i < rows.length; i++) {
-      const row    = rows[i];
-      const name   = String(row[nameCol]||"").trim();
-      const role   = String(row[roleCol]||"").trim();
-      const status = norm(row[shiftCol]);
-      if (!name || /^[0-9]+$/.test(name)) continue;
-      if (WORK[status])       grouped[status].push({ name, role });
-      else if (LEAVE[status]) grouped.OTHER.push({ name, role, st:status });
-    }
-    console.log("Result:", {C1:grouped.C1.length,C2:grouped.C2.length,C3:grouped.C3.length,OTHER:grouped.OTHER.length});
-    Object.keys(WORK).forEach(k => grouped[k].sort((a,b) => rolePriority(a.role) - rolePriority(b.role)));
-    render(grouped);
+    render(await fetchGrouped());
   } catch(err) {
     loadEl.innerHTML = `
       <div style="text-align:center;padding:24px;max-width:440px">
@@ -724,43 +727,7 @@ loadData();
 
 // Auto-refresh data every 5 minutes silently
 setInterval(async () => {
-  try {
-    const resp = await fetch(SP_URL + "?v=" + Date.now());
-    if (!resp.ok) return;
-    const buf  = await resp.arrayBuffer();
-    const wb   = XLSX.read(buf, { type:"array" });
-    const ws   = wb.Sheets[FILTER_TAB];
-    if (!ws) return;
-    const rows = XLSX.utils.sheet_to_json(ws, { header:1, defval:"" });
-    const norm    = v => String(v||"").trim().toUpperCase();
-    const ALLVALS2 = new Set([...Object.keys(WORK), ...Object.keys(LEAVE)]);
-    let shiftCol2 = -1;
-    outer2: for (let i = 1; i < Math.min(rows.length, 10); i++) {
-      for (let j = 0; j < rows[i].length; j++) {
-        if (ALLVALS2.has(norm(rows[i][j]))) { shiftCol2 = j; break outer2; }
-      }
-    }
-    if (shiftCol2 < 0) return;
-    const nameCol2 = Math.max(0, shiftCol2 - 2);
-    const roleCol2 = Math.max(1, shiftCol2 - 1);
-    const grouped = { OTHER:[] };
-    Object.keys(WORK).forEach(k => grouped[k] = []);
-    let dataStart2 = 1;
-    for (let i = 1; i < rows.length; i++) {
-      if (ALLVALS2.has(norm(rows[i][shiftCol2]))) { dataStart2 = i; break; }
-    }
-    for (let i = dataStart2; i < rows.length; i++) {
-      const row    = rows[i];
-      const name   = String(row[nameCol2]||"").trim();
-      const role   = String(row[roleCol2]||"").trim();
-      const status = norm(row[shiftCol2]);
-      if (!name || /^[0-9]+$/.test(name)) continue;
-      if (WORK[status])       grouped[status].push({ name, role });
-      else if (LEAVE[status]) grouped.OTHER.push({ name, role, st:status });
-    }
-    Object.keys(WORK).forEach(k => grouped[k].sort((a,b) => rolePriority(a.role) - rolePriority(b.role)));
-    render(grouped);
-  } catch(e) {}
+  try { render(await fetchGrouped()); } catch(e) {}
 }, 5 * 60 * 1000);
 
 // Auto-reload page when date changes (midnight US Central)

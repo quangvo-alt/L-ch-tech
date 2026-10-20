@@ -489,7 +489,7 @@ function esc(s) {
   return String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":'&#39;'})[c]);
 }
 function cleanName(n) { return n.replace(/\s*\([^)]*\)/g,"").trim(); }
-function cleanRole(r) { return (r||"").trim().replace(/[,;.]+$/,"").trim(); }
+function cleanRole(r) { return (r||"").trim().replace(/[,;.]+$/,"").replace(/tech\s*lobby/ig,"FRT agent").trim(); }
 function initials(n) { return cleanName(n).split(/\s+/).filter(w=>w).slice(-2).map(w=>w[0].toUpperCase()).join("")||"?"; }
 function rolePriority(r) {
   const l = (r||"").toLowerCase();
@@ -514,7 +514,7 @@ function personRow(p, m) {
   const rs   = roleStyle(rr);
   const role = esc(rr);
   const rHtml = role ? `<span class="p-role${rs?" p-badge":""}" style="${rs}">${role}</span>` : "";
-  const mic = /lobby/i.test(rr) ? `<span class="p-mic" title="Tech Lobby">${MIC_SVG}</span>` : "";
+  const mic = /frt agent/i.test(rr) ? `<span class="p-mic" title="FRT agent">${MIC_SVG}</span>` : "";
   return `<div class="p-row">
     <span class="p-dot"></span>
     <div class="p-av" style="background:${m.avBg};color:${m.avTxt};">${ini}</div>

@@ -217,6 +217,11 @@ body::before{
 .p-info{flex:1;min-width:0;display:flex;flex-direction:column;align-items:flex-start;gap:2px}
 .p-name{font-size:17px;font-weight:800;color:var(--row-name);line-height:1.2;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .p-role{font-size:13px;font-weight:600;color:var(--row-role);line-height:1.25;max-width:100%}
+.p-nline{display:flex;align-items:center;gap:6px;max-width:100%;min-width:0}
+.p-half{
+  flex-shrink:0;padding:1px 7px;border-radius:999px;
+  background:#f59e0b;color:#fff;font-family:'Outfit',sans-serif;font-size:12px;font-weight:900;
+}
 .p-badge{padding:2px 8px;border-radius:6px;border-width:1px;border-style:solid;font-size:12px;font-weight:800}
 .p-mic{
   width:28px;height:28px;border-radius:50%;flex-shrink:0;
@@ -403,6 +408,7 @@ const LEAVE_META = {
   ME: { avBg:"#dbeafe", avTxt:"#1d4ed8", pillBg:"#dbeafe", pillTxt:"#1d4ed8" },
   NP: { avBg:"#fef3c7", avTxt:"#92400e", pillBg:"#fde68a", pillTxt:"#92400e" },
   HO: { avBg:"#fee2e2", avTxt:"#991b1b", pillBg:"#fecaca", pillTxt:"#991b1b" },
+  "1/2":{ avBg:"#ffedd5", avTxt:"#c2410c", pillBg:"#f59e0b", pillTxt:"#fff" },
 };
 const STAT_CFG = [
   { key:"work",  lbl:"Work",  clr:"#4ade80" },
@@ -518,7 +524,7 @@ function personRow(p, m) {
   return `<div class="p-row">
     <span class="p-dot"></span>
     <div class="p-av" style="background:${m.avBg};color:${m.avTxt};">${ini}</div>
-    <div class="p-info"><span class="p-name">${name}</span>${rHtml}</div>${mic}
+    <div class="p-info"><div class="p-nline"><span class="p-name">${name}</span>${p.half ? '<span class="p-half" title="Làm nửa ngày">1/2</span>' : ""}</div>${rHtml}</div>${mic}
   </div>`;
 }
 
@@ -529,7 +535,7 @@ function leaveChip(p) {
   return `<div class="l-chip">
     <div class="l-av" style="background:${lm.avBg};color:${lm.avTxt};">${ini}</div>
     <span class="l-name">${nm}</span>
-    <span class="l-pill" style="background:${lm.pillBg};color:${lm.pillTxt};">${esc(p.st)}</span>
+    <span class="l-pill" style="background:${lm.pillBg};color:${lm.pillTxt};">${esc(p.st)}${p.sh ? " · " + esc(p.sh) : ""}</span>
   </div>`;
 }
 
@@ -644,10 +650,33 @@ function detectCols(rows) {
 let LAST_SAVED = null;
 let SHEET_DATE = null;
 
+const isHalf  = s => /1\s*\/\s*2|½/.test(s);
+const nameKey = n => cleanName(String(n)).toLowerCase().replace(/\s+/g, " ");
+
+// Month sheet (e.g. "1026") lists each person's regular shift ("Ca 1.1") in its "Shift" column
+function regularShifts(ws) {
+  const rows = XLSX.utils.sheet_to_json(ws, { header:1, defval:"" });
+  for (let i = 0; i < Math.min(rows.length, 10); i++) {
+    const h = rows[i].map(c => String(c||"").trim().toLowerCase());
+    const shift = h.indexOf("shift");
+    if (shift < 0) continue;
+    let name = h.findIndex(c => c.startsWith("technical"));
+    if (name < 0) name = shift - 2;
+    const map = new Map();
+    for (let r = i + 1; r < rows.length; r++) {
+      const code = "C" + String(rows[r][shift]||"").trim().replace(/^ca\s*/i, "");
+      if (rows[r][name] && WORK[code]) map.set(nameKey(rows[r][name]), code);
+    }
+    return map;
+  }
+  return null;
+}
+
 async function fetchGrouped() {
   const resp = await fetch(SP_URL + "?v=" + Date.now(), { cache:"no-store" });
   if (!resp.ok) throw new Error("HTTP " + resp.status);
-  const wb = XLSX.read(await resp.arrayBuffer(), { type:"array", sheets:[FILTER_TAB] });
+  const monthTab = String(_M).padStart(2, "0") + String(_Y).slice(2);
+  const wb = XLSX.read(await resp.arrayBuffer(), { type:"array", sheets:[FILTER_TAB, monthTab] });
   LAST_SAVED = wb.Props && wb.Props.ModifiedDate ? new Date(wb.Props.ModifiedDate) : null;
   const ws = wb.Sheets[FILTER_TAB];
   if (!ws) throw new Error(`Tab "${FILTER_TAB}" không tìm thấy`);
@@ -663,6 +692,8 @@ async function fetchGrouped() {
       SHEET_DATE = d.toLocaleDateString("en-US", { timeZone:"UTC", month:"long", day:"numeric" });
   }
 
+  const halfShifts = wb.Sheets[monthTab] ? regularShifts(wb.Sheets[monthTab]) : null;
+
   const grouped = { OTHER:[] };
   Object.keys(WORK).forEach(k => grouped[k] = []);
   for (let i = col.start; i < rows.length; i++) {
@@ -673,6 +704,11 @@ async function fetchGrouped() {
     if (!name || /^[0-9]+$/.test(name)) continue;
     if (WORK[status])       grouped[status].push({ name, role });
     else if (LEAVE[status]) grouped.OTHER.push({ name, role, st:status });
+    else if (isHalf(status)) {
+      const sh = halfShifts ? halfShifts.get(nameKey(name)) : null;
+      if (sh) grouped[sh].push({ name, role, half:true });
+      grouped.OTHER.push({ name, role, st:"1/2", half:true, sh });
+    }
   }
   Object.keys(WORK).forEach(k => grouped[k].sort((a,b) => rolePriority(a.role) - rolePriority(b.role)));
   return grouped;

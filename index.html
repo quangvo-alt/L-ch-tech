@@ -126,6 +126,7 @@ body::before{
 #date-block{flex:1;text-align:center;min-width:0;padding:0 8px}
 #day-name{font-family:'Outfit',sans-serif;font-size:22px;font-weight:900;color:#fff;line-height:1}
 #date-str{font-size:10px;color:rgba(255,255,255,.65);margin-top:2px;font-weight:600;letter-spacing:.4px}
+.stale-warn{color:#fde047;font-weight:800}
 #quote-line{
   font-size:13px;font-style:italic;font-weight:500;
   color:rgba(255,255,255,.92);
@@ -552,7 +553,17 @@ function shiftCard(s, grouped) {
 function render(grouped) {
   // Date
   document.getElementById("day-name").textContent = DAY_NAME;
-  document.getElementById("date-str").textContent = DATE_STR;
+  const saved = LAST_SAVED
+    ? " · Excel lưu lúc " + LAST_SAVED.toLocaleTimeString("en-US", { timeZone:_tz, hour:"numeric", minute:"2-digit" })
+    : "";
+  const ds = document.getElementById("date-str");
+  ds.textContent = DATE_STR + saved;
+  if (SHEET_DATE) {
+    const w = document.createElement("span");
+    w.className = "stale-warn";
+    w.textContent = ` ⚠️ Excel vẫn là lịch ${SHEET_DATE} — mở file Excel để cập nhật`;
+    ds.appendChild(w);
+  }
 
   // Quote in topbar
   const q = QUOTES[DAY_OF_YR % QUOTES.length];
@@ -630,14 +641,27 @@ function detectCols(rows) {
   throw new Error("Không tìm thấy cột Shift trong tab " + FILTER_TAB);
 }
 
+let LAST_SAVED = null;
+let SHEET_DATE = null;
+
 async function fetchGrouped() {
   const resp = await fetch(SP_URL + "?v=" + Date.now(), { cache:"no-store" });
   if (!resp.ok) throw new Error("HTTP " + resp.status);
-  const wb = XLSX.read(await resp.arrayBuffer(), { type:"array" });
+  const wb = XLSX.read(await resp.arrayBuffer(), { type:"array", sheets:[FILTER_TAB] });
+  LAST_SAVED = wb.Props && wb.Props.ModifiedDate ? new Date(wb.Props.ModifiedDate) : null;
   const ws = wb.Sheets[FILTER_TAB];
   if (!ws) throw new Error(`Tab "${FILTER_TAB}" không tìm thấy`);
   const rows = XLSX.utils.sheet_to_json(ws, { header:1, defval:"" });
   const col  = detectCols(rows);
+
+  // Filter's date is TODAY(), stored only when someone saves the workbook
+  SHEET_DATE = null;
+  const serial = rows[0] && rows[0][col.shift];
+  if (typeof serial === "number" && serial > 40000) {
+    const d = new Date(Math.round((serial - 25569) * 86400000));
+    if (d.getUTCFullYear() !== _Y || d.getUTCMonth() + 1 !== _M || d.getUTCDate() !== _D)
+      SHEET_DATE = d.toLocaleDateString("en-US", { timeZone:"UTC", month:"long", day:"numeric" });
+  }
 
   const grouped = { OTHER:[] };
   Object.keys(WORK).forEach(k => grouped[k] = []);
@@ -726,9 +750,14 @@ function copyImg() {
 loadData();
 
 // Auto-refresh data every 5 minutes silently
-setInterval(async () => {
-  try { render(await fetchGrouped()); } catch(e) {}
-}, 5 * 60 * 1000);
+let refreshing = false;
+async function silentRefresh() {
+  if (refreshing) return;
+  refreshing = true;
+  try { render(await fetchGrouped()); } catch(e) {} finally { refreshing = false; }
+}
+setInterval(silentRefresh, 60 * 1000);
+document.addEventListener("visibilitychange", () => { if (!document.hidden) silentRefresh(); });
 
 // Auto-reload page when date changes (midnight US Central)
 (function() {
